@@ -11,3 +11,12 @@ Compose `Canvas` so the app works entirely offline.
 
 - [README](./Calm%20Control/README.md) — architecture and the design rules behind it
 - [INSTALL](./Calm%20Control/INSTALL.md) — prerequisites, building, sideloading, troubleshooting
+
+## Licence
+
+MIT. Fork it, copy it, modify it, ship it commercially. See [LICENSE](./LICENSE).
+
+The one exception is the bundled Lora typeface, which stays under the SIL Open Font License 1.1.
+Keep its notice file in place when you redistribute.
+
+[Contributing](./CONTRIBUTING.md) lists where the project is thinnest, which is mostly testing.

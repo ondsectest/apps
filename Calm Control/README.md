@@ -163,3 +163,11 @@ Drawing uses `drawWithCache`, so the five gradients and the star `Path` are buil
 instead of roughly thirty allocations per frame per orb. The breath is applied in a
 `graphicsLayer` block, deferring the state read to the layer phase so a 60 Hz animation does not
 recompose the subtree 60 times a second.
+
+## Licence
+
+MIT, at the [repository root](../LICENSE). Fork it, copy it, modify it, ship it commercially.
+
+The bundled Lora typeface is separately licensed under the SIL Open Font License 1.1, with its
+notice at `app/src/main/assets/licenses/OFL-Lora.txt`. MIT does not relicense it, so keep that
+file in place when redistributing.
