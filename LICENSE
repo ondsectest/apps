@@ -19,18 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Third-party assets
-
-The Lora typeface bundled at
-"Calm Control/app/src/main/res/font/lora_variable.ttf" is not covered by the
-MIT licence above. It is licensed separately under the SIL Open Font License
-1.1, whose full text ships alongside the app at
-"Calm Control/app/src/main/assets/licenses/OFL-Lora.txt".
-
-The OFL permits use, modification and redistribution, including inside a
-commercial product, but it requires that the font keep its own licence and
-that it is never sold on its own. Keep that notice file in place when you fork
-or redistribute this project.

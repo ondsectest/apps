@@ -17,6 +17,6 @@ Compose `Canvas` so the app works entirely offline.
 MIT. Fork it, copy it, modify it, ship it commercially. See [LICENSE](./LICENSE).
 
 The one exception is the bundled Lora typeface, which stays under the SIL Open Font License 1.1.
-Keep its notice file in place when you redistribute.
+See [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md).
 
 [Contributing](./CONTRIBUTING.md) lists where the project is thinnest, which is mostly testing.

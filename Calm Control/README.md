@@ -168,6 +168,6 @@ recompose the subtree 60 times a second.
 
 MIT, at the [repository root](../LICENSE). Fork it, copy it, modify it, ship it commercially.
 
-The bundled Lora typeface is separately licensed under the SIL Open Font License 1.1, with its
-notice at `app/src/main/assets/licenses/OFL-Lora.txt`. MIT does not relicense it, so keep that
-file in place when redistributing.
+The bundled Lora typeface is separately licensed under the SIL Open Font License 1.1. MIT does not
+relicense it, so keep `app/src/main/assets/licenses/OFL-Lora.txt` in place when redistributing.
+Details in [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md).
