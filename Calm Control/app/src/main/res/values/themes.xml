@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      A launch-window theme only. It exists so the brief moment before Compose draws is the same
+      calm neutral as the app itself, rather than a white flash.
+    -->
+    <style name="Theme.CalmControl" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/calm_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

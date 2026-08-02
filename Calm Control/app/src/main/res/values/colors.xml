@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Only used for the launch window and the adaptive icon. Compose owns everything else. -->
+    <color name="calm_background">#F6F4F1</color>
+    <color name="calm_background_dark">#15171A</color>
+    <color name="ic_launcher_background">#3E7F66</color>
+</resources>
