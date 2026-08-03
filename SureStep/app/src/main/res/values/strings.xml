@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SureStep</string>
+
+    <string name="reminder_channel_name">Reminders</string>
+    <string name="reminder_channel_description">Checklist reminders you scheduled yourself.</string>
+</resources>

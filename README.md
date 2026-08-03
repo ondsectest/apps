@@ -12,6 +12,22 @@ Compose `Canvas` so the app works entirely offline.
 - [README](./Calm%20Control/README.md) — architecture and the design rules behind it
 - [INSTALL](./Calm%20Control/INSTALL.md) — prerequisites, building, sideloading, troubleshooting
 
+## [SureStep](./SureStep)
+
+An offline Android app for recording that you did something — locked the door, turned off the gas,
+picked up your medicines — so that later, when you are not sure, you have a record to read instead
+of a trip back home.
+
+Tapping a task saves a timestamp, and optionally a location and an automatic selfie. Once recorded,
+the task shows its record rather than another button to press: the app is built to replace repeated
+checking, not to encourage it.
+
+Jetpack Compose, Room, CameraX, Hilt, WorkManager. No server, no account, and no `INTERNET`
+permission — nothing recorded can leave the phone.
+
+- [README](./SureStep/README.md) — architecture and the design rules behind it
+- [INSTALL](./SureStep/INSTALL.md) — prerequisites, building, sideloading, troubleshooting
+
 ## Licence
 
 MIT. Fork it, copy it, modify it, ship it commercially. See [LICENSE](./LICENSE).

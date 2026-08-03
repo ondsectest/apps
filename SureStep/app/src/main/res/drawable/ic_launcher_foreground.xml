@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- A shield with a check inside: "recorded, you're covered". -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,26L74,33.5V54C74,66.5 65.5,76.5 54,81C42.5,76.5 34,66.5 34,54V33.5L54,26Z" />
+    <path
+        android:fillColor="#2A6F97"
+        android:pathData="M45,53.5L51.5,60L64,47.5L67.5,51L51.5,67L41.5,57L45,53.5Z" />
+</vector>
