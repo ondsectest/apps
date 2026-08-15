@@ -7,3 +7,6 @@ build/
 captures/
 .externalNativeBuild/
 .cxx/
+
+# Built APKs are debug-keystore signed and reproducible from source — do not commit them.
+*.apk

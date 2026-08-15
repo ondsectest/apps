@@ -43,6 +43,16 @@ class ReportsRepository(
     }
 
     /**
+     * Just [day]'s events. For screens that only need today's tally — the Log screen's count —
+     * rather than the full rolling window every Reports chart is derived from.
+     */
+    fun observeDay(day: LocalDate): Flow<List<TriggerEvent>> {
+        val from = day.atStartOfDay(zone).toInstant().toEpochMilli()
+        val to = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        return dao.observeBetween(from, to)
+    }
+
+    /**
      * The seam the logging UI plugs into. Every chart updates off the back of this call, with no
      * refresh plumbing, because Room re-emits the window flow on write.
      */

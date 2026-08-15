@@ -36,7 +36,7 @@ class LogViewModel(
     val todaySummary: StateFlow<DailySummary?> =
         combine(
             today,
-            today.flatMapLatest(repository::observeRecentWindow),
+            today.flatMapLatest(repository::observeDay),
         ) { day, events ->
             ReportsCalculator.dailySummary(events, day, repository.zone)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)

@@ -66,6 +66,14 @@ android {
         compose = true
         buildConfig = true
     }
+
+    testOptions {
+        unitTests {
+            // Compose UI tests run as local JVM tests under Robolectric, which needs the real
+            // Android resource/manifest merge, not the default stub.
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 ksp {
@@ -86,10 +94,13 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.ui.tooling.preview)
     debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
     testImplementation(libs.junit)
+    testImplementation(libs.androidx.ui.test.junit4)
+    testImplementation(libs.robolectric)
 }

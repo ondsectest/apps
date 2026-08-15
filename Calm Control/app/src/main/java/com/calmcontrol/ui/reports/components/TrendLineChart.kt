@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.calmcontrol.domain.TrendPoint
@@ -196,7 +197,7 @@ private fun smoothPath(points: List<Offset>): Path {
     return path
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawRevealed(
+private fun DrawScope.drawRevealed(
     path: Path,
     color: Color,
     progress: Float,

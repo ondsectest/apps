@@ -8,13 +8,14 @@ Two ways in: install the APK on a phone, or build from source.
 
 Requires **Android 8.0 (API 26) or newer**.
 
-1. Build an APK (see below) or take one from a release.
+1. Build an APK (see below). Prebuilt APKs are not shipped in this repo — see
+   [About release signing](#about-release-signing) for why.
 2. Copy it to the phone and open it. Android will ask you to allow installs from whichever app
    you transferred with — Files, Drive, Chrome. Allow it for that app only.
 3. Or install over USB with debugging enabled:
 
    ```bash
-   adb install CalmControl-1.0-release.apk
+   adb install app/build/outputs/apk/release/app-release.apk
    ```
 
    If you have both a phone and an emulator connected, `adb` will refuse to guess. Use `adb -d`
