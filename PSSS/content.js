@@ -76,19 +76,12 @@
       };
       this._onBlur = () => this._updateOverlayVisibility();
       this._onScrollResize = () => this.syncPosition();
-      // Cmd/Ctrl+A (or any selection) on the real input fires this — it's how
-      // we notice a selection happened at all, since the real selection
-      // itself is made invisible via CSS (see content.css).
-      this._onSelectionChange = () => {
-        if (document.activeElement === this.input) this._updateOverlayVisibility();
-      };
 
       this.input.addEventListener('input', this._onInput);
       this.input.addEventListener('focus', this._onFocus);
       this.input.addEventListener('blur', this._onBlur);
       window.addEventListener('scroll', this._onScrollResize, true);
       window.addEventListener('resize', this._onScrollResize);
-      document.addEventListener('selectionchange', this._onSelectionChange);
 
       this.mo = new MutationObserver(() => this.updateMaskState());
       this.mo.observe(this.input, { attributes: true, attributeFilter: ['type', 'style', 'class'] });
@@ -118,14 +111,9 @@
     _updateOverlayVisibility() {
       const isFocused = document.activeElement === this.input;
       const hasValue = this.input.value.length > 0;
-      const hasSelection = isFocused && this.input.selectionStart !== this.input.selectionEnd;
       const shouldShow = this.maskingActive && (hasValue || isFocused);
       this.overlay.style.display = shouldShow ? 'flex' : 'none';
-      // No blinking caret while a range is selected — matches how a real
-      // text field behaves (the caret only reappears once the selection
-      // collapses back to a single point).
-      this.caretEl.classList.toggle('ss-hidden', !(this.maskingActive && isFocused) || hasSelection);
-      this.bulletsEl.classList.toggle('ss-shield-selected', this.maskingActive && hasSelection);
+      this.caretEl.classList.toggle('ss-hidden', !(this.maskingActive && isFocused));
     }
 
     // Cheap: just the on-screen rect. Called every animation frame so the
@@ -191,7 +179,6 @@
       this.input.removeEventListener('blur', this._onBlur);
       window.removeEventListener('scroll', this._onScrollResize, true);
       window.removeEventListener('resize', this._onScrollResize);
-      document.removeEventListener('selectionchange', this._onSelectionChange);
       this.mo && this.mo.disconnect();
       this.ro && this.ro.disconnect();
       this.overlay && this.overlay.remove();
