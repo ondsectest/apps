@@ -201,14 +201,6 @@
   }
 
   const guards = new Map();
-  // Set once the page starts navigating away (see pagehide below) and never
-  // unset — this document is on its way out, so nothing should re-attach a
-  // guard from this point on. Without this, removing the overlay to tear
-  // down is itself a DOM mutation, which re-triggers scan() via the body
-  // observer, which promptly creates a brand new guard on the same
-  // still-present <input type="password"> — silently undoing the teardown
-  // moments after it happened.
-  let torndown = false;
 
   // The overlay lives on document.body, not inside the input, so it survives
   // even if the page removes/replaces the input (e.g. a site re-rendering
@@ -224,7 +216,6 @@
   }
 
   async function scan() {
-    if (torndown) return;
     const settings = await getSettings();
     const enabled = isEnabledForThisPage(settings);
     const fields = document.querySelectorAll('input[type="password"], input[data-ss-shield-attached]');
@@ -280,37 +271,17 @@
     });
     // Safety net in case a removal happens somewhere the mutation observer
     // doesn't see (e.g. inside a shadow root).
-    const pruneIntervalId = setInterval(pruneDisconnected, 2000);
+    setInterval(pruneDisconnected, 2000);
 
     // Continuously keep every overlay pinned to its input's actual on-screen
     // position, so any layout shift caused by content elsewhere on the page
     // (banners, validation messages, etc.) can't leave it stranded.
     (function tick() {
-      if (torndown) return;
       guards.forEach((guard) => {
         if (guard.input.isConnected) guard.syncGeometry();
       });
       requestAnimationFrame(tick);
     })();
-
-    // The instant the page starts navigating away (including a plain
-    // reload), stop reacting to anything on the page and remove the overlay
-    // immediately. Without this, the rAF loop above can catch one last frame
-    // mid-teardown — the page's own layout is being torn down at that point,
-    // so a position it computes then can be stale or wildly wrong — and
-    // since the overlay is an absolutely-positioned element on document.body,
-    // a bad value there can expand the page's scrollable area and visibly
-    // shift/clip content for that last rendered frame before the navigation
-    // completes. bodyObserver is disconnected first and torndown is set
-    // before detaching, so removing the overlays can't itself trigger scan()
-    // to immediately recreate them on the still-present password inputs.
-    window.addEventListener('pagehide', () => {
-      torndown = true;
-      bodyObserver.disconnect();
-      clearInterval(pruneIntervalId);
-      guards.forEach((guard) => guard.detach());
-      guards.clear();
-    });
   }
 
   if (document.readyState === 'loading') {
