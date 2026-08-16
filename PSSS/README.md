@@ -9,6 +9,20 @@ is altered.
 No account, no server, no data collected. [INSTALL.md](./INSTALL.md) covers
 loading it in Chrome.
 
+## Screenshots
+
+<p align="center">
+  <img src="./store-assets/screenshots/1-hero.png" width="410" alt="Hero: headline and a mock password field showing the length-hidden idea" />
+  <img src="./store-assets/screenshots/2-before-after.png" width="410" alt="Before/after comparison: real dot count visible vs. randomized decoy count" />
+</p>
+<p align="center">
+  <img src="./store-assets/screenshots/3-popup-light.png" width="410" alt="Popup UI in light mode, shown inside a browser mockup with feature callouts" />
+  <img src="./store-assets/screenshots/4-popup-dark.png" width="410" alt="Popup UI in dark mode, protection on, closed-eyes icon and glowing toggle" />
+</p>
+<p align="center">
+  <img src="./store-assets/screenshots/5-how-it-works.png" width="410" alt="Three-step explainer: type your password, dots get randomized, you sign in normally" />
+</p>
+
 ## How it works
 
 - A content script (`content.js`) detects `<input type="password">` fields
