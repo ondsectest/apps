@@ -12,6 +12,16 @@ input.ss-shield-hidden-text {
   text-shadow: none !important;
 }
 
+/* Native text selection (e.g. Cmd/Ctrl+A) draws a highlight box sized to the
+   REAL selected range, completely independent of color/caret-color — so
+   without this, selecting all reveals the real password length through the
+   highlight's width alone. The overlay draws its own fake "selected" look
+   instead (see .ss-shield-bullets.ss-shield-selected below). */
+input.ss-shield-hidden-text::selection {
+  background: transparent !important;
+  color: transparent !important;
+}
+
 .ss-shield-overlay {
   position: absolute;
   display: none;
@@ -28,6 +38,16 @@ input.ss-shield-hidden-text {
 
 .ss-shield-bullets {
   white-space: pre;
+}
+
+/* Fake "selected" look, shown whenever the real input has any selection at
+   all (see DecoyGuard._updateOverlayVisibility) — uses the OS/browser's own
+   current selection colors so it matches the real thing, but its width is
+   just however many decoy dots are already showing, never the real length. */
+.ss-shield-bullets.ss-shield-selected {
+  background: Highlight;
+  color: HighlightText;
+  border-radius: 2px;
 }
 
 .ss-shield-caret {
