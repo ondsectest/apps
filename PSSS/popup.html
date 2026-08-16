@@ -1,0 +1,308 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Password Shoulder-Surf Shield</title>
+    <style>
+      :root {
+        --bg: #f8fafc;
+        --panel: #ffffff;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --accent: #2563eb;
+        --accent-text: #ffffff;
+        --glow: none;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0b1120;
+          --panel: #0f172a;
+          --text: #e2f7ea;
+          --muted: #7d92a8;
+          --border: #1e293b;
+          --accent: #22ff88;
+          --accent-text: #04150b;
+          --glow: 0 0 14px rgba(34, 255, 136, 0.45);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      /* Chrome auto-sizes a popup once on initial load. If content is added
+         afterward via JS — like the refresh banner, the only thing in this
+         popup that appears after that first paint — its measurement can be
+         wrong and leave the window wider than the content actually needs.
+         Pinning width on both html and body, with a hard max-width and
+         overflow-x clamp, stops the window from ever growing past 300px
+         regardless of what shows up later. */
+      html {
+        width: 300px;
+        max-width: 300px;
+      }
+
+      body {
+        width: 300px;
+        max-width: 300px;
+        overflow-x: hidden;
+        margin: 0;
+        padding: 16px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body {
+          font-family: "SFMono-Regular", "Menlo", "Consolas", monospace;
+        }
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      header img {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+      }
+
+      h1 {
+        font-size: 13px;
+        margin: 0;
+        letter-spacing: 0.2px;
+      }
+
+      .stage {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 12px;
+        box-shadow: var(--glow);
+      }
+
+      .stage img {
+        width: 140px;
+        height: 140px;
+        display: block;
+      }
+
+      .status-text {
+        text-align: center;
+        font-size: 12px;
+        font-weight: 600;
+        margin: -4px 0 12px;
+        color: var(--muted);
+      }
+
+      .status-text.on {
+        color: var(--accent);
+      }
+
+      .sub {
+        font-size: 11px;
+        color: var(--muted);
+        margin: 0 0 6px;
+      }
+
+      select {
+        width: 100%;
+        padding: 6px;
+        font-size: 13px;
+        margin-bottom: 10px;
+        background: var(--panel);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .label {
+        font-size: 13px;
+      }
+
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 38px;
+        height: 20px;
+        flex-shrink: 0;
+      }
+
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        inset: 0;
+        background-color: #ccc;
+        transition: 0.15s;
+        border-radius: 20px;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: 0.15s;
+        border-radius: 50%;
+      }
+
+      input:checked + .slider {
+        background-color: var(--accent);
+        box-shadow: var(--glow);
+      }
+
+      input:checked + .slider:before {
+        transform: translateX(18px);
+      }
+
+      #siteHost {
+        font-weight: 600;
+        word-break: break-all;
+      }
+
+      hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 12px 0;
+      }
+
+      .privacy-note {
+        font-size: 11px;
+        font-weight: 700;
+        text-align: center;
+        color: var(--accent);
+        margin: 0 0 12px;
+      }
+
+      footer {
+        font-size: 11px;
+        color: var(--muted);
+        text-align: center;
+        line-height: 1.6;
+      }
+
+      footer a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        text-decoration: underline;
+      }
+
+      .refresh-banner {
+        display: none;
+        background: var(--panel);
+        border: 1px solid var(--accent);
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .refresh-banner p {
+        margin: 0 0 8px;
+      }
+
+      .refresh-banner button {
+        width: 100%;
+        padding: 7px;
+        font-size: 12px;
+        font-weight: 700;
+        border: none;
+        border-radius: 6px;
+        background: var(--accent);
+        color: var(--accent-text);
+        cursor: pointer;
+        font-family: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <img src="icons/icon-open-48.png" alt="" />
+      <h1>Password Shoulder-Surf Shield</h1>
+    </header>
+
+    <div class="stage">
+      <img id="stateImage" src="images/hacker-eyes-open.png" alt="Shield status" />
+    </div>
+    <p id="statusText" class="status-text">Protection is OFF — hacker is watching</p>
+
+    <label class="sub" for="modeSelect">Apply this extension:</label>
+    <select id="modeSelect">
+      <option value="global">Globally (all sites)</option>
+      <option value="per-site">Per site</option>
+    </select>
+
+    <div id="globalRow" class="row">
+      <span class="label">Enabled everywhere</span>
+      <label class="switch">
+        <input type="checkbox" id="globalToggle" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div id="siteRow" class="row" style="display: none">
+      <span class="label">Enabled on <span id="siteHost">this site</span></span>
+      <label class="switch">
+        <input type="checkbox" id="siteToggle" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div id="refreshBanner" class="refresh-banner">
+      <p>This tab was already open before you turned protection on. Refresh it once to activate the shield here.</p>
+      <button id="refreshTabBtn" type="button">Refresh this tab</button>
+    </div>
+
+    <hr />
+
+    <p class="privacy-note">No Network Calls or Storage in the Cloud at all.</p>
+
+    <div class="sub" style="margin-bottom: 0">
+      When enabled, password fields show a randomized decoy dot count while
+      you type. The real characters you type are what actually get
+      submitted.
+    </div>
+
+    <hr />
+
+    <footer>
+      Created by:
+      <a href="https://www.linkedin.com/in/santhosh-tuppad-338b7412/" target="_blank" rel="noopener noreferrer">Santhosh Tuppad</a>
+      <br />
+      <a href="mailto:ondsectest@gmail.com?subject=Password%20Shoulder-Surf%20Shield%20-%20Bug%20Report">Report Bug</a>
+    </footer>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
