@@ -1,10 +1,5 @@
 input.ss-shield-hidden-text {
   color: transparent !important;
-  /* Some browsers paint input glyphs via -webkit-text-fill-color instead of
-     (or in addition to) color — most noticeably with autofill-style
-     backgrounds. Without this, the real dots can stay visible even though
-     `color` is transparent, which is exactly how the real length leaks. */
-  -webkit-text-fill-color: transparent !important;
   /* The real caret must never be visible — its position always tracks the
      real character count, which would leak the real length even though the
      visible dots are randomized. The overlay draws its own fake caret. */
