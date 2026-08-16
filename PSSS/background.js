@@ -27,17 +27,8 @@ function getSettings() {
   return new Promise((resolve) => chrome.storage.sync.get(DEFAULT_SETTINGS, resolve));
 }
 
-function setSettings(partial) {
-  return new Promise((resolve) => chrome.storage.sync.set(partial, resolve));
-}
-
 function hostnameToOriginPattern(hostname) {
   return `*://${hostname}/*`;
-}
-
-function hostnameFromOriginPattern(pattern) {
-  const m = /^\*:\/\/([^/]+)\/\*$/.exec(pattern);
-  return m ? m[1] : null;
 }
 
 // Which origin patterns the user's current settings call for, intersected
@@ -213,69 +204,14 @@ chrome.storage.onChanged.addListener(() => {
   refreshActiveTab();
 });
 
-// These two listeners are the single source of truth for translating an
-// actual browser permission grant/revoke into stored settings. They must
-// not assume popup.js already wrote the matching setting — showing the
-// native permission dialog steals focus from the extension popup, and
-// Chrome closes popups the instant they lose focus. That kills popup.js
-// mid-await, before it can write globalEnabled/siteOverrides, even though
-// the permission itself was genuinely granted. This listener runs in the
-// background service worker, which has no such focus-loss lifecycle, so it
-// reliably persists the real state and activates the content script
-// regardless of whether the popup survived long enough to do it itself.
 chrome.permissions.onAdded.addListener(async ({ origins }) => {
-  if (origins && origins.length) {
-    const settings = await getSettings();
-    const changed = {};
-
-    if (origins.includes('<all_urls>')) {
-      changed.globalEnabled = true;
-      changed.siteOverrides = {}; // mutual exclusivity, enforced here too as a safety net
-    } else {
-      const siteOverrides = { ...(settings.siteOverrides || {}) };
-      let touched = false;
-      for (const pattern of origins) {
-        const host = hostnameFromOriginPattern(pattern);
-        if (host) {
-          siteOverrides[host] = true;
-          touched = true;
-        }
-      }
-      if (touched) changed.siteOverrides = siteOverrides;
-    }
-
-    if (Object.keys(changed).length) await setSettings(changed);
-  }
-
   await syncRegisteredContentScript();
   if (origins && origins.length) await injectIntoOpenTabsMatching(origins);
   refreshActiveTab();
 });
 
-chrome.permissions.onRemoved.addListener(async ({ origins }) => {
-  if (origins && origins.length) {
-    const settings = await getSettings();
-    const changed = {};
-
-    if (origins.includes('<all_urls>')) {
-      changed.globalEnabled = false;
-    } else {
-      const siteOverrides = { ...(settings.siteOverrides || {}) };
-      let touched = false;
-      for (const pattern of origins) {
-        const host = hostnameFromOriginPattern(pattern);
-        if (host && siteOverrides[host]) {
-          siteOverrides[host] = false;
-          touched = true;
-        }
-      }
-      if (touched) changed.siteOverrides = siteOverrides;
-    }
-
-    if (Object.keys(changed).length) await setSettings(changed);
-  }
-
-  await syncRegisteredContentScript();
+chrome.permissions.onRemoved.addListener(() => {
+  syncRegisteredContentScript();
   refreshActiveTab();
 });
 
