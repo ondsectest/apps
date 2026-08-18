@@ -2,6 +2,10 @@
 
 All notable changes to PSSS (Password Shoulder-Surf Shield) are documented here.
 
+## 1.3.1
+
+- **Fixed:** `Uncaught (in promise) Error: Duplicate script ID 'ss-shield-content'` in the background service worker, reported right after install/update. Root cause: `syncRegisteredContentScript()` checked `getRegisteredContentScripts()` first to decide whether to register fresh or update — that check can go stale immediately after an extension update/reload, since a `persistAcrossSessions` registration from the previous service worker instance can still exist even when the check briefly reports nothing. Fixed by trying `updateContentScripts()` first and only falling back to `registerContentScripts()` on failure, with both paths tolerant of the other side's error — no more "check, then trust the check."
+
 ## 1.3.0
 
 - Added a "Share on LinkedIn" link to the popup footer, next to "Report Bug". Opens LinkedIn's share dialog pointed at the Chrome Web Store listing.

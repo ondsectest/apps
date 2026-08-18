@@ -67,10 +67,12 @@ async function syncRegisteredContentScript() {
   const settings = await getSettings();
   const matches = await desiredGrantedMatches(settings);
 
-  const existing = await chrome.scripting.getRegisteredContentScripts({ ids: [CONTENT_SCRIPT_ID] });
-
   if (matches.length === 0) {
-    if (existing.length) await chrome.scripting.unregisterContentScripts({ ids: [CONTENT_SCRIPT_ID] });
+    try {
+      await chrome.scripting.unregisterContentScripts({ ids: [CONTENT_SCRIPT_ID] });
+    } catch (e) {
+      /* nothing registered — nothing to unregister */
+    }
     return;
   }
 
@@ -84,10 +86,24 @@ async function syncRegisteredContentScript() {
     persistAcrossSessions: true,
   }];
 
-  if (existing.length) {
+  // Deliberately not "check with getRegisteredContentScripts, then decide"
+  // — that check can go stale right after an extension update/reload, since
+  // a persistAcrossSessions registration from the previous service worker
+  // instance can still be there even when the check briefly reports
+  // nothing. That's exactly what caused "Duplicate script ID" here: the
+  // check said "not registered," so this called registerContentScripts,
+  // which then failed because it actually still was. Trying update() first
+  // and only falling back to register() on failure sidesteps the stale
+  // check entirely — and the inner catch covers the reverse race (a
+  // concurrent call already registered it between the two calls here).
+  try {
     await chrome.scripting.updateContentScripts(config);
-  } else {
-    await chrome.scripting.registerContentScripts(config);
+  } catch (e) {
+    try {
+      await chrome.scripting.registerContentScripts(config);
+    } catch (e2) {
+      /* a concurrent call already registered it — fine either way */
+    }
   }
 }
 
