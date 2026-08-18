@@ -7,7 +7,8 @@ unchanged and is exactly what gets submitted — only what's visible on screen
 is altered.
 
 No account, no server, no data collected. [INSTALL.md](./INSTALL.md) covers
-loading it in Chrome.
+loading it in Chrome, and [CHANGELOG.md](./CHANGELOG.md) lists what's
+changed release to release.
 
 ## Screenshots
 
