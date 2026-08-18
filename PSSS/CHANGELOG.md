@@ -2,6 +2,13 @@
 
 All notable changes to PSSS (Password Shoulder-Surf Shield) are documented here.
 
+## 1.3.0
+
+- Added a "Share on LinkedIn" link to the popup footer, next to "Report Bug". Opens LinkedIn's share dialog pointed at the Chrome Web Store listing.
+- The existing "Created by: Santhosh Tuppad" footer link already covered visiting the creator's LinkedIn profile — no separate control was needed for that.
+- Deliberately **not** automatic: both of the above are user-triggered from the popup, not fired on install. Opening tabs or a pre-armed share dialog the instant a privacy-focused extension installs, with no user action, was considered and rejected — it's the kind of unexpected-redirect behavior Chrome Web Store review flags, and it would have contradicted this extension's own "nothing happens without you asking" design.
+- Note: LinkedIn's public share link only accepts the URL being shared — it doesn't support pre-filling custom post text (LinkedIn deprecated that years ago). The preview card LinkedIn generates comes from the Chrome Web Store listing's own description, which should state the no-network-calls/no-data-storage/no-selling-data facts directly for that to show up.
+
 ## 1.2.0
 
 - **Fixed:** "Report Bug" link in the popup did nothing when clicked. It was a plain `mailto:` link with no `target`, which tries to navigate the popup's own window — something extension popups can't do. Now opens the [PSSS issue tracker](https://github.com/ondsectest/apps/issues/new?title=%5BPSSS%5D%20&labels=bug) in a new tab instead. ([#1](https://github.com/ondsectest/apps/issues/1), [PR #2](https://github.com/ondsectest/apps/pull/2))
