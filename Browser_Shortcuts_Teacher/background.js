@@ -62,7 +62,8 @@ async function showTip(force = false) {
     iconUrl: "icons/icon128.png",
     title: tip.action,
     message: tip.keys,
-    contextMessage: tip.category
+    contextMessage: tip.category,
+    requireInteraction: true
   });
 
   return { ok: true };
