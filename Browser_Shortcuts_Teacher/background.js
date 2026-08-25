@@ -123,7 +123,7 @@ function injectedShowTip(tip) {
 }
 
 async function showTip(force = false) {
-  if (!force && (await isSuppressed())) return;
+  if (!force && (await isSuppressed())) return { ok: false, reason: "suppressed" };
 
   const osFamily = await getOsFamily();
   const list = SHORTCUT_DATA[osFamily];
@@ -132,7 +132,9 @@ async function showTip(force = false) {
   await chrome.storage.local.set({ [STORAGE_KEYS.lastIndex]: index });
 
   const tab = await getTargetTab();
-  if (!tab || !tab.id || !/^https?:/.test(tab.url || "")) return;
+  if (!tab || !tab.id || !/^https?:/.test(tab.url || "")) {
+    return { ok: false, reason: "unsupported-tab" };
+  }
 
   try {
     await chrome.scripting.executeScript({
@@ -140,8 +142,10 @@ async function showTip(force = false) {
       func: injectedShowTip,
       args: [tip]
     });
+    return { ok: true };
   } catch (e) {
-    // Tab may not be injectable (chrome:// pages, web store, etc.) - ignore.
+    // Tab may not be injectable (chrome:// pages, web store, etc.)
+    return { ok: false, reason: "injection-failed" };
   }
 }
 
@@ -162,11 +166,21 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-// Stealth manual trigger — not surfaced in the popup UI or anywhere else in
-// the extension. Fires instantly on Cmd+Shift+9 (Mac) / Ctrl+Shift+9 (Win/Linux),
-// bypassing pause/snooze so it always shows a tip on demand.
+// Manual trigger, bypassing pause/snooze so it always shows a tip on demand.
+// Reachable two ways, since Chrome's suggested_key auto-binding for the
+// Cmd+Shift+9 / Ctrl+Shift+9 command can silently fail to register (e.g. if
+// another extension already claims it) with no warning to the user:
+//   1. The keyboard shortcut, when Chrome did bind it.
+//   2. The "Show a tip now" button in the popup, which always works.
 chrome.commands.onCommand.addListener((command) => {
   if (command === "trigger-tip-now") {
     showTip(true);
+  }
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === "showTipNow") {
+    showTip(true).then(sendResponse);
+    return true; // keep the message channel open for the async response
   }
 });
