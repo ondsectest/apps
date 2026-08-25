@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Shortcut Tips</title>
+  <style>
+    body {
+      width: 240px;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #ffffff;
+      color: #1f2328;
+    }
+    .wrap { padding: 14px 16px; }
+    h1 { font-size: 14px; margin: 0 0 2px 0; }
+    .status { font-size: 12px; color: #6b7280; margin: 0 0 12px 0; }
+    .status.active { color: #16a34a; }
+    .status.paused { color: #d97706; }
+    button {
+      width: 100%;
+      display: block;
+      margin-bottom: 8px;
+      padding: 8px 10px;
+      font-size: 12.5px;
+      border-radius: 7px;
+      border: 1px solid #e3e6ea;
+      background: #f9fafb;
+      color: #1f2328;
+      cursor: pointer;
+      text-align: left;
+    }
+    button:hover { background: #f3f4f6; }
+    button.primary { background: #111827; color: #fff; border-color: #111827; }
+    button.primary:hover { background: #1f2937; }
+    .row { display: flex; gap: 8px; }
+    .row button { flex: 1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Shortcut Tips</h1>
+    <p class="status" id="status">Loading…</p>
+    <button id="toggleBtn" class="primary"></button>
+    <div class="row">
+      <button data-mins="30">Snooze 30m</button>
+      <button data-mins="60">Snooze 1h</button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
