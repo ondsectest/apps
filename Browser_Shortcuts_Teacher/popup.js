@@ -43,29 +43,6 @@ toggleBtn.addEventListener("click", async () => {
   render();
 });
 
-const tipNowBtn = document.getElementById("tipNowBtn");
-const tipNowDefaultLabel = tipNowBtn.textContent;
-let tipNowResetTimer = null;
-
-tipNowBtn.addEventListener("click", async () => {
-  tipNowBtn.disabled = true;
-  let result;
-  try {
-    result = await chrome.runtime.sendMessage({ type: "showTipNow" });
-  } catch (e) {
-    result = { ok: false, reason: "no-response" };
-  }
-  tipNowBtn.disabled = false;
-
-  if (!result || !result.ok) {
-    tipNowBtn.textContent = "Couldn't show a tip";
-    clearTimeout(tipNowResetTimer);
-    tipNowResetTimer = setTimeout(() => {
-      tipNowBtn.textContent = tipNowDefaultLabel;
-    }, 2000);
-  }
-});
-
 document.querySelectorAll("button[data-mins]").forEach((btn) => {
   btn.addEventListener("click", async () => {
     const mins = parseInt(btn.dataset.mins, 10);

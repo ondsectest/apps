@@ -2,8 +2,9 @@
   "manifest_version": 3,
   "name": "Browser Shortcuts Master",
   "version": "1.0.0",
-  "description": "Shows a random Chrome/OS keyboard shortcut tip every 5-10 minutes as a system notification.",
-  "permissions": ["alarms", "storage", "notifications"],
+  "description": "Shows a random Chrome/OS keyboard shortcut tip every 5-10 minutes in a clean floating card.",
+  "permissions": ["alarms", "storage", "tabs", "scripting"],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
   },

@@ -5,9 +5,9 @@
 ## Overview
 
 Browser Shortcuts Master is a Chrome extension with one purpose: to help you
-learn Chrome and OS keyboard shortcuts. It shows a random shortcut tip as a
-system notification every 5–10 minutes, or on demand, using the correct key
-combo for your operating system.
+learn Chrome and OS keyboard shortcuts. It shows a random shortcut tip in a
+small floating card every 5–10 minutes, or on demand via a keyboard
+shortcut, using the correct key combo for your operating system.
 
 This policy explains exactly what data the extension touches and what it
 does with it.
@@ -38,10 +38,15 @@ visible to the developer, and not shared with any third party.
 
 - **alarms** — schedules the periodic tip on a randomized 5–10 minute timer.
 - **storage** — saves the local state listed above.
-- **notifications** — displays the tip itself, as a native OS notification.
-  This extension does not use any host permissions, does not inject
-  anything into web pages, and cannot read or modify the content of any
-  site you visit.
+- **tabs** — lets the background service worker find the currently active
+  tab when a tip is due, since the periodic tip isn't triggered by a fresh
+  click from you.
+- **scripting** — injects the small tip-card element into the active tab so
+  it can be displayed.
+- **host permission (`<all_urls>`)** — needed because a tip can appear on
+  whatever site you happen to be browsing, which can't be known in advance.
+  The injected code only ever adds the tip card; it never reads page
+  content, form data, or cookies, and makes no network requests.
 
 ## Third-party sharing
 
