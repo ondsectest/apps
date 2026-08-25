@@ -58,10 +58,7 @@ tipNowBtn.addEventListener("click", async () => {
   tipNowBtn.disabled = false;
 
   if (!result || !result.ok) {
-    tipNowBtn.textContent =
-      result?.reason === "unsupported-tab"
-        ? "Open a regular webpage tab first"
-        : "Couldn't show a tip here";
+    tipNowBtn.textContent = "Couldn't show a tip";
     clearTimeout(tipNowResetTimer);
     tipNowResetTimer = setTimeout(() => {
       tipNowBtn.textContent = tipNowDefaultLabel;

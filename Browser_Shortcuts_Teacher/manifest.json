@@ -1,16 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "Shortcut Tips",
+  "name": "Browser Shortcuts Master",
   "version": "1.0.0",
-  "description": "Shows a random Chrome/OS keyboard shortcut tip every 5-10 minutes in a clean floating card.",
-  "permissions": ["alarms", "storage", "tabs", "scripting"],
-  "host_permissions": ["<all_urls>"],
+  "description": "Shows a random Chrome/OS keyboard shortcut tip every 5-10 minutes as a system notification.",
+  "permissions": ["alarms", "storage", "notifications"],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Shortcut Tips",
+    "default_title": "Browser Shortcuts Master",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
