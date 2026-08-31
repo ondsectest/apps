@@ -41,6 +41,18 @@ account, no data collected.
 - [README](./PSSS/README.md) — architecture and the design decisions behind it
 - [INSTALL](./PSSS/INSTALL.md) — loading it in Chrome, permissions it asks for, troubleshooting
 
+## [Claude Feature Explorer](./Claude%20Feature%20Explorer)
+
+A slideshow, in the browser, that teaches Claude's core features by showing the actual request
+you'd send and the actual response you'd get back — the Messages API, vision, tool use, extended
+thinking, prompt caching, streaming, Claude Code, the Agent SDK, MCP, and computer use — plus a
+scripted offline chat demo to try the turn-taking shape live.
+
+Static HTML/CSS/JS, no build step, no dependencies, no API key required.
+
+- [README](./Claude%20Feature%20Explorer/README.md) — what it covers and how it's built
+- [INSTALL](./Claude%20Feature%20Explorer/INSTALL.md) — running it, three ways
+
 ## Licence
 
 MIT. Fork it, copy it, modify it, ship it commercially. See [LICENSE](./LICENSE).

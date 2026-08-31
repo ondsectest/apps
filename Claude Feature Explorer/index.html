@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Feature Explorer</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%23da7756%22/><text x=%2250%22 y=%2266%22 font-size=%2258%22 text-anchor=%22middle%22 font-family=%22sans-serif%22 fill=%22%23fff%22>C</text></svg>" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">C</span>
+        <span class="brand-name">Claude Feature Explorer</span>
+      </div>
+      <div class="topbar-controls">
+        <span class="slide-counter"><span id="slideIndex">1</span> / <span id="slideTotal">1</span></span>
+        <button id="overviewBtn" class="icon-btn" type="button" aria-label="Show overview" title="Overview (S)">▤</button>
+        <button id="themeBtn" class="icon-btn" type="button" aria-label="Toggle theme" title="Toggle light/dark">◐</button>
+      </div>
+    </header>
+
+    <div class="progress-track" aria-hidden="true">
+      <div id="progressFill" class="progress-fill"></div>
+    </div>
+
+    <main id="slideArea" class="slide-area" aria-live="polite"></main>
+
+    <nav class="controls">
+      <button id="prevBtn" class="nav-btn" type="button">← Prev</button>
+      <div id="dots" class="dots" role="tablist" aria-label="Slides"></div>
+      <button id="nextBtn" class="nav-btn nav-btn-primary" type="button">Next →</button>
+    </nav>
+  </div>
+
+  <div id="overview" class="overview hidden" role="dialog" aria-modal="true" aria-label="Slide overview">
+    <div class="overview-panel">
+      <div class="overview-header">
+        <h2>Overview</h2>
+        <button id="closeOverview" class="icon-btn" type="button" aria-label="Close overview">✕</button>
+      </div>
+      <div id="overviewList" class="overview-list"></div>
+    </div>
+  </div>
+
+  <script src="slides.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
