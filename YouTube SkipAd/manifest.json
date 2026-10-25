@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "SkipAd",
+  "version": "1.1",
+  "description": "Clicks the YouTube \"Skip Ad\" button as soon as it appears.",
+  "permissions": ["debugger"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*", "https://m.youtube.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
