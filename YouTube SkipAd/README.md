@@ -62,6 +62,10 @@ YouTube changes its player from time to time. Open the console on the YouTube ta
 - **The line appears but the ad isn't skipped:** check for errors under **service worker** on the
   extension's card in `chrome://extensions`.
 
+## Credits
+
+Built by Santhosh Tuppad.
+
 ## Licence
 
 MIT. Use it, change it, share it. See [LICENSE](../LICENSE).

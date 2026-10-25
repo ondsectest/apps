@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "SkipAd",
-  "version": "1.1",
-  "description": "Clicks the YouTube \"Skip Ad\" button as soon as it appears.",
+  "version": "1.2",
+  "description": "Clicks the YouTube \"Skip Ad\" button as soon as it appears. Built by Santhosh Tuppad.",
   "permissions": ["debugger"],
   "background": {
     "service_worker": "background.js"

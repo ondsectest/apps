@@ -1,3 +1,6 @@
+// YouTube SkipAd
+// Built by Santhosh Tuppad
+
 // Known class names YouTube has used for the skip button. YouTube renames these
 // from time to time, so we also fall back to matching the button text below.
 const SKIP_SELECTORS = [
@@ -52,6 +55,8 @@ function trySkip() {
   // background.js performs the actual mouse movement and click.
   chrome.runtime.sendMessage({ type: "skip", x, y });
 }
+
+console.log("[SkipAd] YouTube SkipAd is running. Built by Santhosh Tuppad.");
 
 // React as soon as the page changes (the skip button gets added or shown).
 new MutationObserver(trySkip).observe(document.documentElement, {

@@ -1,3 +1,6 @@
+// YouTube SkipAd
+// Built by Santhosh Tuppad
+
 // Sends real mouse input to the tab through Chrome's debugger API. Unlike a
 // script calling button.click(), these clicks look to the page exactly like a
 // person using the mouse.
