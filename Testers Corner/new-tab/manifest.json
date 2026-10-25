@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Testers’ Corner – New Tab",
+  "short_name": "Testers’ Corner",
+  "version": "1.0.0",
+  "description": "A dark new tab page with a fresh software testing tip every time you open it. Built by Santhosh Tuppad.",
+  "author": "Santhosh Tuppad",
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "permissions": ["search"],
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}

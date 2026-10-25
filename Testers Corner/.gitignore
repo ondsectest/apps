@@ -1,0 +1,6 @@
+dist/
+.DS_Store
+__pycache__/
+.claude/
+photos-original/
+Cached Theme.pak

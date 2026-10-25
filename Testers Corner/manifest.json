@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Testers’ Corner",
+  "version": "1.0.0",
+  "description": "A calm dark Chrome theme for software testers, with teal accents. Built by Santhosh Tuppad.",
+  "author": "Santhosh Tuppad",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "theme": {
+    "colors": {
+      "frame": [11, 14, 20],
+      "frame_inactive": [16, 19, 26],
+      "frame_incognito": [20, 14, 28],
+      "frame_incognito_inactive": [24, 18, 32],
+      "background_tab": [11, 14, 20],
+      "background_tab_inactive": [16, 19, 26],
+      "toolbar": [21, 26, 35],
+      "toolbar_text": [230, 234, 242],
+      "toolbar_button_icon": [176, 186, 202],
+      "tab_text": [230, 234, 242],
+      "tab_background_text": [140, 150, 168],
+      "tab_background_text_inactive": [110, 118, 134],
+      "tab_background_text_incognito": [150, 140, 170],
+      "bookmark_text": [200, 208, 220],
+      "omnibox_background": [11, 14, 20],
+      "omnibox_text": [230, 234, 242],
+      "ntp_background": [11, 14, 20],
+      "ntp_text": [230, 234, 242],
+      "ntp_link": [79, 209, 197]
+    }
+  }
+}

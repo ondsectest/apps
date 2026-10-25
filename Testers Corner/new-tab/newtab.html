@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>New Tab</title>
+  <link rel="icon" href="icons/icon-16.png">
+  <link rel="stylesheet" href="newtab.css">
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <img src="icons/icon-48.png" alt="" width="24" height="24">
+      <span>Testers’ Corner</span>
+    </div>
+    <div class="clock">
+      <time id="time" class="clock-time"></time>
+      <span id="date" class="clock-date"></span>
+    </div>
+  </header>
+
+  <main class="main">
+    <p id="greeting" class="greeting"></p>
+
+    <form id="search" class="search" role="search">
+      <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" name="q" type="search" placeholder="Search the web" autocomplete="off" aria-label="Search the web">
+      <kbd>↵</kbd>
+    </form>
+
+    <article id="tip" class="tip" aria-live="polite">
+      <div class="tip-head">
+        <span class="tip-label">Testing tip <span id="tip-num" class="tip-num"></span></span>
+        <span id="tip-area" class="chip"></span>
+      </div>
+      <h1 id="tip-title" class="tip-title"></h1>
+      <p id="tip-text" class="tip-text"></p>
+      <div class="tip-foot">
+        <span class="tip-source">From the <em id="tip-source"></em> mind map</span>
+        <div class="tip-actions">
+          <button id="prev" type="button" class="btn" title="Previous tip (←)" aria-label="Previous tip">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <button id="copy" type="button" class="btn" title="Copy tip (C)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>
+            <span id="copy-label">Copy</span>
+          </button>
+          <button id="next" type="button" class="btn btn-primary" title="Next tip (→)">
+            <span>Next tip</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+    </article>
+
+    <p class="hint"><kbd>←</kbd> <kbd>→</kbd> browse tips · <kbd>C</kbd> copy · <kbd>/</kbd> search</p>
+  </main>
+
+  <section class="people" aria-labelledby="people-title">
+    <h2 id="people-title" class="people-title">Learn from some of the people who shaped software testing</h2>
+    <ul id="people" class="people-row"></ul>
+  </section>
+
+  <footer class="footer">
+    <span>Testing tips from software testing mind maps repository</span>
+    <span class="dot" aria-hidden="true">·</span>
+    <span>Built by Santhosh Tuppad</span>
+  </footer>
+
+  <script src="tips.js"></script>
+  <script src="people.js"></script>
+  <script src="newtab.js"></script>
+</body>
+</html>
