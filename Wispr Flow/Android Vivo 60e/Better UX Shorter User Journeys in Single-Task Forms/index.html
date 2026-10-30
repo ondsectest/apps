@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
 <title>Better UX: Shorter User Journeys in Single-Task Forms</title>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -44,6 +44,8 @@
   .phone.native-kb .appbar { height: 44px; }
   .phone.native-kb .tabs .tab { height: 48px; }
   .phone.native-kb .body { padding-top: 14px; }
+  .phone.native-kb .details { min-height: 90px; }
+  .phone.native-kb #desc { min-height: 60px; }
 
   .status {
     height: 44px; flex: none;
@@ -411,10 +413,31 @@
     details.classList.add('show');
     // Focus inside the same tap so a real phone raises its native keyboard;
     // on desktop the simulated keyboard tray slides up instead.
-    desc.focus();
+    desc.focus({ preventScroll: true });
+    pinTop();
     showKeyboard(desc);
     updateSend();
   }
+
+  /* Keep "Request type" in view: when the keyboard opens, some phones scroll or pan the page
+     so the description sits at the very top. For a short moment after choosing a type
+     (or while the keyboard settles), put every scroll position back to the top. */
+  let pinUntil = 0;
+  function resetScroll() {
+    if (Date.now() > pinUntil || document.activeElement !== desc) return;
+    ['panel-report', 'scr-form'].forEach(id => { const el = $(id); if (el && el.scrollTop) el.scrollTop = 0; });
+    const ph = document.querySelector('.phone'); if (ph.scrollTop) ph.scrollTop = 0;
+    if (window.scrollY || document.documentElement.scrollTop) window.scrollTo(0, 0);
+  }
+  function pinTop() { pinUntil = Date.now() + 1500; resetScroll(); requestAnimationFrame(resetScroll); }
+  document.addEventListener('scroll', resetScroll, true);
+  window.addEventListener('resize', () => { if (document.activeElement === desc && pinUntil) { pinUntil = Math.max(pinUntil, Date.now() + 600); resetScroll(); } });
+  if (window.visualViewport) {
+    visualViewport.addEventListener('resize', () => { if (document.activeElement === desc && pinUntil) { pinUntil = Math.max(pinUntil, Date.now() + 600); resetScroll(); } });
+    visualViewport.addEventListener('scroll', resetScroll);
+  }
+  // If the person scrolls on purpose, stop holding the page
+  ['touchmove', 'wheel'].forEach(ev => document.addEventListener(ev, () => { pinUntil = 0; }, { passive: true }));
 
   tray.addEventListener('click', e => {
     const li = e.target.closest('.opt');
