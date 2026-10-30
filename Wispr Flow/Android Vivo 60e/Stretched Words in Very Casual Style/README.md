@@ -43,6 +43,7 @@ In Very Casual and Excited only, keep drawn-out words roughly as spoken, perhaps
 | File | What it is |
 | --- | --- |
 | `Whaaat_vs_What.gif` | A short looping animation of the issue: what was said, what Flow typed, and the style used. |
+| `stretched-words-in-very-casual-style.html` | The report as a web page, with the animation, "Said" and "Typed" side by side, and the full details. One self-contained file; open it in any browser. |
 
 ## Notes
 
