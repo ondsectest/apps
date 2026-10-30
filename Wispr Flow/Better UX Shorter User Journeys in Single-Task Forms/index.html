@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Better UX: Shorter User Journeys in Single-Task Forms</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #6B2F8F;
+    --purple-soft: #F6E9FD;
+    --ink: #1C1B1F;
+    --muted: #7A7780;
+    --border: #3F3D45;
+    --line: #C9C5CE;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Figtree", system-ui, sans-serif;
+    background: #E9E6EE;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink);
+  }
+
+  /* Phone frame (desktop). On a real phone it goes full screen. */
+  .phone {
+    width: 390px; height: 844px;
+    background: #fff;
+    border-radius: 44px;
+    border: 10px solid #111;
+    box-shadow: 0 30px 60px rgba(0,0,0,.25);
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  @media (max-width: 500px) {
+    body { background: #fff; display: block; }
+    .phone { width: 100%; height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
+    /* On a real phone the device already shows its own status bar and nav bar */
+    .status, .navbar { display: none !important; }
+    .phone .appbar { height: 52px; }
+  }
+  /* When the phone's own keyboard is up, tighten the top so the form stays neat */
+  .phone.native-kb .appbar { height: 44px; }
+  .phone.native-kb .tabs .tab { height: 48px; }
+  .phone.native-kb .body { padding-top: 14px; }
+
+  .status {
+    height: 44px; flex: none;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 26px; font-size: 14px; font-weight: 500; color: #333;
+  }
+  .status .sig { display: flex; gap: 6px; align-items: center; font-size: 10px; font-weight: 600; }
+  .bars { display: flex; gap: 2px; align-items: flex-end; }
+  .bars i { display: block; width: 3px; background: #333; border-radius: 1px; }
+  .battery { width: 10px; height: 16px; border: 1.5px solid #555; border-radius: 2px; position: relative; }
+  .battery::after { content: ""; position: absolute; left: 1px; right: 1px; bottom: 1px; height: 5px; background: #555; }
+
+  .screen { flex: 1; display: none; flex-direction: column; min-height: 0; }
+  .screen.active { display: flex; }
+
+  /* App bar */
+  .appbar { height: 64px; flex: none; display: flex; align-items: center; padding: 0 8px; gap: 8px; }
+  .icon-btn {
+    width: 48px; height: 48px; border: 0; background: none; border-radius: 50%;
+    display: grid; place-items: center; cursor: pointer;
+  }
+  .icon-btn:active { background: #EEE; }
+  .appbar h1 { font-size: 20px; font-weight: 500; }
+
+  /* Help screen */
+  .help-list { padding: 8px 0; }
+  .help-item {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px 24px; font-size: 16px; cursor: pointer; border: 0; background: none; width: 100%; text-align: left; color: var(--ink); font-family: inherit;
+  }
+  .help-item:hover, .help-item:active { background: #F4F0F7; }
+  .help-item .lbl { flex: 1; }
+  .help-item.link .lbl { color: var(--purple); font-weight: 500; }
+  .help-note { padding: 16px 24px; font-size: 13px; color: var(--muted); }
+
+  /* Tabs */
+  .tabs { display: flex; flex: none; border-bottom: 1px solid #EEE; }
+  .tab {
+    flex: 1; height: 56px; border: 0; background: none; cursor: pointer;
+    font-family: inherit; font-size: 18px; color: var(--muted); position: relative;
+  }
+  .tab.active { color: var(--ink); font-weight: 500; }
+  .tab[aria-disabled="true"], .help-item[aria-disabled="true"] { color: #B5B1BA; cursor: not-allowed; }
+  .help-item[aria-disabled="true"] .lbl { color: #B5B1BA; }
+  .help-item[aria-disabled="true"]:hover { background: none; }
+  .tip-wrap { position: relative; flex: 1; display: flex; }
+  .tip-wrap .tab { width: 100%; }
+  .tip {
+    position: absolute; top: calc(100% + 6px); right: 8px; z-index: 20; width: 220px;
+    background: #2B2930; color: #fff; font-size: 13px; line-height: 1.4; font-weight: 400;
+    padding: 10px 12px; border-radius: 8px; box-shadow: 0 6px 16px rgba(0,0,0,.2);
+    opacity: 0; transform: translateY(-4px); transition: .15s; pointer-events: none; text-align: left;
+  }
+  .tip::before { content: ""; position: absolute; top: -6px; right: 40px; border: 6px solid transparent; border-top: 0; border-bottom-color: #2B2930; }
+  .tip.show, .tip-wrap:hover .tip, .tip-wrap:focus-within .tip { opacity: 1; transform: none; }
+  .help-item .tip { top: calc(100% - 4px); right: 24px; }
+  /* Items above "Report an issue" show their note above, so it never covers the live link */
+  .help-item.proto-off .tip { top: auto; bottom: calc(100% - 4px); }
+  .help-item.proto-off .tip::before { top: auto; bottom: -6px; border-top: 6px solid #2B2930; border-bottom: 0; }
+  .tip-wrap.attach-wrap { flex: 0 0 36%; }
+  .attach-wrap .btn-attach { width: 100%; flex: 1; }
+  .btn-attach[aria-disabled="true"] { color: #B5B1BA; border-color: #CFCBD4; cursor: not-allowed; background: #fff; }
+  .attach-wrap .tip { top: auto; bottom: calc(100% + 8px); left: 0; right: auto; }
+  .attach-wrap .tip::before { top: auto; bottom: -6px; left: 40px; right: auto; border-top: 6px solid #2B2930; border-bottom: 0; }
+  .help-item.tip-wrap { position: relative; }
+  .tab.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: var(--purple); }
+
+  .body { flex: 1; min-height: 0; overflow-y: auto; padding: 22px 16px 16px; position: relative; }
+
+  /* Select field */
+  .field-label { font-size: 12px; color: var(--muted); margin: 0 0 6px 4px; }
+  .select {
+    flex: none; width: 100%; height: 64px; border: 2px solid var(--border); border-radius: 12px;
+    background: #fff; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px; font-family: inherit; font-size: 18px; color: var(--ink); cursor: pointer;
+  }
+  .select.placeholder { color: var(--muted); }
+  .select .caret { width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 7px solid var(--ink); transition: transform .15s; }
+
+  .tray {
+    flex: none; margin-top: 6px; border: 2px solid var(--border); border-radius: 12px;
+    background: #fff; box-shadow: 0 6px 16px rgba(0,0,0,.08);
+    padding: 8px 0; list-style: none;
+    transform-origin: top; animation: drop .16s ease-out;
+  }
+  .tray[hidden] { display: none; }
+  @keyframes drop { from { opacity: 0; transform: scaleY(.92); } to { opacity: 1; transform: none; } }
+  .opt {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 16px 18px 16px; font-size: 18px; cursor: pointer;
+  }
+  .opt:focus { outline: none; }
+  .opt:focus-visible { background: #F7F3FA; }
+  @media (hover: hover) { .opt:hover { background: #F7F3FA; } }
+  /* Radio button: only one issue type can be chosen */
+  .box {
+    width: 26px; height: 26px; border: 2px solid #79747E; border-radius: 50%;
+    display: grid; place-items: center; flex: none; transition: border-color .15s;
+  }
+  .box::after { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--purple); transform: scale(0); transition: transform .15s; }
+  .opt[aria-selected="true"] .box { border-color: var(--purple); }
+  .opt[aria-selected="true"] .box::after { transform: scale(1); }
+
+  /* Description area */
+  #panel-report { display: flex; flex-direction: column; }
+  .details { margin-top: 18px; display: none; flex: 1; flex-direction: column; position: relative; min-height: 128px; animation: fade .2s ease-out; }
+  .details.show { display: flex; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  textarea {
+    width: 100%; min-height: 160px; resize: none;
+    border: 2px solid var(--border); border-radius: 12px; padding: 16px 18px;
+    font-family: inherit; font-size: 16px; line-height: 1.45; color: var(--ink);
+  }
+  textarea:focus { outline: none; border-color: var(--purple); }
+  /* Description field: borderless, like the screenshot */
+  #desc {
+    flex: 1; border: 0; border-radius: 0; padding: 0 64px 0 0; min-height: 100px;
+    font-size: 19px; line-height: 1.55; caret-color: var(--purple); background: transparent;
+  }
+  #desc::placeholder { color: var(--muted); }
+  .mic {
+    position: absolute; right: 0; top: 66px; width: 56px; height: 56px;
+    border: 0; border-radius: 14px; background: var(--purple-soft);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08); display: grid; place-items: center; cursor: pointer;
+  }
+  .mic.listening { background: var(--purple); animation: pulse 1s ease-in-out infinite; }
+  .mic.listening svg { stroke: #fff; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 8px rgba(107,47,143,.18); } }
+  .err { font-size: 13px; color: #B3261E; margin-top: 6px; display: none; }
+  .err.show { display: block; }
+  .counter { text-align: right; font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* Simulated Android keyboard (desktop preview only) */
+  .kb {
+    flex: none; background: #1F2024; padding: 6px 4px 4px; user-select: none;
+    animation: kbup .2s ease-out;
+  }
+  .kb[hidden] { display: none; }
+  @keyframes kbup { from { transform: translateY(100%); } to { transform: none; } }
+  .kb-tools { display: flex; justify-content: space-around; align-items: center; height: 40px; margin-bottom: 4px; color: #C4C7CF; font-size: 13px; font-weight: 700; }
+  .kb-tools .kb-mic { width: 36px; height: 36px; border-radius: 50%; background: #3B3D43; display: grid; place-items: center; }
+  .kb-row { display: flex; gap: 5px; margin: 0 0 7px; justify-content: center; }
+  .key {
+    flex: 1; height: 42px; border: 0; border-radius: 7px; background: #3B3D43; color: #F1F1F3;
+    font-family: "Figtree", sans-serif; font-size: 20px; cursor: pointer; padding: 0;
+    display: grid; place-items: center;
+  }
+  .key:active { background: #5A5D66; }
+  .key.sp { background: #3E4757; font-size: 15px; }
+  .key.wide { flex: 1.5; }
+  .key.space { flex: 4.2; }
+  .key.round { border-radius: 21px; }
+  .key.on { background: #A8C7FA; color: #1F2024; }
+  .kb-row.half { padding: 0 18px; }
+  .navbar .kb-down { display: none; }
+  .phone.kb-open .navbar { background: #1F2024; }
+  .phone.kb-open .navbar .kb-down { display: block; }
+  .phone.kb-open .navbar .nav-back { display: none; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chip {
+    display: flex; align-items: center; gap: 6px; max-width: 100%;
+    background: #F3EEF7; border-radius: 16px; padding: 6px 6px 6px 12px; font-size: 13px;
+  }
+  .chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+  .chip button { border: 0; background: none; cursor: pointer; width: 22px; height: 22px; border-radius: 50%; font-size: 14px; color: #555; }
+  .chip button:hover { background: #E2D8EA; }
+
+  /* Bottom actions */
+  .actions { flex: none; display: flex; gap: 14px; padding: 12px 16px 14px; }
+  .btn {
+    height: 60px; border-radius: 12px; border: 2px solid var(--ink);
+    font-family: inherit; font-size: 20px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .btn-attach { flex: 0 0 36%; background: #fff; color: var(--ink); }
+  .btn-attach:active { background: #F3F3F3; }
+  .btn-send { flex: 1; background: var(--purple); color: #fff; border-color: var(--purple); }
+  .btn-send:disabled, .btn-send[aria-disabled="true"] { background: var(--purple-soft); color: var(--muted); border-color: var(--ink); cursor: not-allowed; }
+
+  .navbar { height: 48px; flex: none; display: flex; justify-content: space-around; align-items: center; color: #888; }
+
+  /* Feedback tab */
+  .stars { display: flex; gap: 8px; margin: 6px 0 20px; }
+  .star { border: 0; background: none; font-size: 36px; color: #D3CDD9; cursor: pointer; line-height: 1; }
+  .star.on { color: var(--purple); }
+
+  /* Success sheet */
+  .toast {
+    position: absolute; left: 16px; right: 16px; bottom: 140px;
+    background: #2B2930; color: #fff; padding: 14px 16px; border-radius: 10px;
+    font-size: 15px; opacity: 0; transform: translateY(10px); transition: .2s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: none; }
+  .done { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; gap: 12px; }
+  .done .tick { width: 72px; height: 72px; border-radius: 50%; background: var(--purple-soft); display: grid; place-items: center; }
+  .done h2 { font-size: 22px; font-weight: 600; }
+  .done p { color: var(--muted); font-size: 15px; line-height: 1.45; }
+  .done .ref { font-family: ui-monospace, monospace; font-size: 13px; background: #F3EEF7; padding: 6px 10px; border-radius: 6px; color: var(--ink); }
+  .done .btn { margin-top: 16px; width: 100%; flex: none; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="status">
+    <span id="clock">10:19</span>
+    <span class="sig">
+      <span>Vo<br>NR</span><span>5G+</span>
+      <span class="bars"><i style="height:4px"></i><i style="height:7px"></i><i style="height:10px"></i><i style="height:13px"></i></span>
+      <span class="battery"></span>
+    </span>
+  </div>
+
+  <!-- Screen 1: Help & support with the Report an issue link -->
+  <section class="screen active" id="scr-help">
+    <div class="appbar">
+      <button class="icon-btn" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+      <h1>Help &amp; support</h1>
+    </div>
+    <div class="help-list">
+      <button class="help-item tip-wrap proto-off" aria-disabled="true" aria-describedby="tip-h1"><span class="lbl">Help centre</span><span>&rsaquo;</span>
+        <span class="tip" role="tooltip" id="tip-h1">This is just a prototype of the Report an issue flow, so Help centre is disabled.</span></button>
+      <button class="help-item tip-wrap proto-off" aria-disabled="true" aria-describedby="tip-h2"><span class="lbl">Privacy policy</span><span>&rsaquo;</span>
+        <span class="tip" role="tooltip" id="tip-h2">This is just a prototype of the Report an issue flow, so Privacy policy is disabled.</span></button>
+      <button class="help-item tip-wrap proto-off" aria-disabled="true" aria-describedby="tip-h3"><span class="lbl">Terms of service</span><span>&rsaquo;</span>
+        <span class="tip" role="tooltip" id="tip-h3">This is just a prototype of the Report an issue flow, so Terms of service is disabled.</span></button>
+      <button class="help-item link" id="open-report"><span class="lbl">Report an issue</span><span>&rsaquo;</span></button>
+      <button class="help-item link tip-wrap" id="open-feedback" aria-disabled="true" aria-describedby="tip-fb2"><span class="lbl">Share feedback</span><span>&rsaquo;</span>
+        <span class="tip" role="tooltip" id="tip-fb2">This is just a prototype of the Report an issue flow, so Share feedback is disabled.</span></button>
+    </div>
+    <p class="help-note">Prototype: tap "Report an issue" to open the form. The issue type tray opens automatically.</p>
+  </section>
+
+  <!-- Screen 2: Report / Feedback form -->
+  <section class="screen" id="scr-form">
+    <div class="appbar">
+      <button class="icon-btn" id="back" aria-label="Back"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab active" role="tab" id="tab-report" aria-selected="true">Report an issue</button>
+      <div class="tip-wrap">
+        <button class="tab" role="tab" id="tab-feedback" aria-selected="false" aria-disabled="true" aria-describedby="tip-fb">Share feedback</button>
+        <span class="tip" role="tooltip" id="tip-fb">This is just a prototype of the Report an issue flow, so Share feedback is disabled.</span>
+      </div>
+    </div>
+
+    <!-- Report panel -->
+    <div class="body" id="panel-report">
+      <button class="select placeholder" id="type-select" aria-haspopup="listbox" aria-expanded="true">
+        <span id="type-value">Select issue type</span><span class="caret"></span>
+      </button>
+      <ul class="tray" id="tray" role="listbox" aria-label="Issue type"></ul>
+
+      <div class="details" id="details">
+        <textarea id="desc" maxlength="1000" required aria-required="true" aria-label="Describe the issue" placeholder="Tell us what went wrong.&#10;What happened, and when?"></textarea>
+        <button class="mic" id="mic" aria-label="Dictate description">
+          <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#5F5B66" stroke-width="2.4" stroke-linecap="round"><path d="M3 6v14M8 10v8M13 4v18M18 9v10M23 6v14"/></svg>
+        </button>
+        <div class="chips" id="chips"></div>
+        <p class="err" id="err">Description is required.</p>
+      </div>
+    </div>
+
+    <!-- Feedback panel -->
+    <div class="body" id="panel-feedback" hidden>
+      <div class="field-label">How was your experience?</div>
+      <div class="stars" id="stars"></div>
+      <textarea id="fb" maxlength="1000" placeholder="Tell us what you like or what we could do better"></textarea>
+      <div class="counter"><span id="fbcount">0</span> / 1000</div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="actions" id="actions">
+      <div class="tip-wrap attach-wrap">
+      <button class="btn btn-attach" id="attach" aria-disabled="true" aria-describedby="tip-attach">
+        <svg width="20" height="24" viewBox="0 0 20 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 6v11a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v11a1 1 0 0 1-2 0V7"/></svg>
+        Attach
+      </button>
+      <span class="tip" role="tooltip" id="tip-attach">This is just a prototype of the Report an issue flow, so Attach is disabled.</span>
+      </div>
+      <button class="btn btn-send" id="send" aria-disabled="true">Send</button>
+      <input type="file" id="file" multiple accept="image/*,video/*,.pdf,.txt,.log" hidden>
+    </div>
+  </section>
+
+  <!-- Screen 3: Sent -->
+  <section class="screen" id="scr-done">
+    <div class="appbar">
+      <button class="icon-btn" id="done-back" aria-label="Back"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+    </div>
+    <div class="done">
+      <div class="tick"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#6B2F8F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <h2 id="done-title">Dummy page</h2>
+      <p id="done-text">Our team will look into this and get back to you.</p>
+      <span class="ref" id="done-ref"></span>
+      <button class="btn btn-send" id="done-ok">Done</button>
+    </div>
+  </section>
+
+  <div class="kb" id="kb" hidden aria-hidden="true"></div>
+
+  <div class="navbar">
+    <svg width="22" height="16" viewBox="0 0 22 16" stroke="#888" stroke-width="2"><path d="M2 2h18M2 8h18M2 14h18"/></svg>
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="9"/></svg>
+    <svg class="nav-back" width="14" height="22" viewBox="0 0 14 22" fill="none" stroke="#888" stroke-width="2"><path d="M12 2L3 11l9 9"/></svg>
+    <button class="kb-down icon-btn" id="kb-down" aria-label="Hide keyboard" style="width:40px;height:40px"><svg width="22" height="14" viewBox="0 0 22 14" fill="none" stroke="#C4C7CF" stroke-width="2"><path d="M2 2l9 9 9-9"/></svg></button>
+  </div>
+</div>
+
+<script>
+(function () {
+  const OPTIONS = [
+    { id: 'issue',   label: 'Issue',              hint: 'Tip: screenshots or a screen recording help us reproduce the problem faster.', ph: 'Describe the issue. What happened, what you expected, and the steps to reproduce it.' },
+    { id: 'billing', label: 'Billing',            hint: 'Please include the invoice or transaction date. Do not share full card numbers.', ph: 'Describe the billing issue. Include the amount and date of the charge.' },
+    { id: 'account', label: 'Account management', hint: 'For your security, we will never ask for your password.', ph: 'Describe what you need help with on your account.' }
+  ];
+
+  const $ = id => document.getElementById(id);
+  const tray = $('tray'), select = $('type-select'), typeValue = $('type-value');
+  const details = $('details'), desc = $('desc'), send = $('send');
+  const chips = $('chips'), fileInput = $('file');
+
+  let selected = null;      // nothing pre-selected; user must pick a type
+  let confirmed = false;    // becomes true once the user picks an option in the tray
+  let files = [];
+  let tab = 'report';
+  let rating = 0;
+
+  const check = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  function renderTray() {
+    tray.innerHTML = OPTIONS.map(o =>
+      `<li class="opt" role="option" tabindex="0" data-id="${o.id}" aria-selected="${o.id === selected}">
+         <span>${o.label}</span><span class="box" aria-hidden="true"></span>
+       </li>`).join('');
+  }
+
+  function openTray() {
+    hideKeyboard();
+    renderTray();
+    tray.hidden = false;
+    select.setAttribute('aria-expanded', 'true');
+  }
+  function closeTray() {
+    tray.hidden = true;
+    select.setAttribute('aria-expanded', 'false');
+  }
+
+  function choose(id) {
+    selected = id;
+    confirmed = true;
+    const opt = OPTIONS.find(o => o.id === id);
+    typeValue.textContent = opt.label;
+    select.classList.remove('placeholder');
+    closeTray();
+    details.classList.add('show');
+    // Focus inside the same tap so a real phone raises its native keyboard;
+    // on desktop the simulated keyboard tray slides up instead.
+    desc.focus();
+    showKeyboard(desc);
+    updateSend();
+  }
+
+  tray.addEventListener('click', e => {
+    const li = e.target.closest('.opt');
+    if (li) choose(li.dataset.id);
+  });
+  tray.addEventListener('keydown', e => {
+    const li = e.target.closest('.opt');
+    if (!li) return;
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(li.dataset.id); }
+    if (e.key === 'ArrowDown') { e.preventDefault(); (li.nextElementSibling || li).focus(); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); (li.previousElementSibling || li).focus(); }
+    if (e.key === 'Escape') { closeTray(); select.focus(); }
+  });
+  select.addEventListener('click', () => tray.hidden ? openTray() : closeTray());
+
+  // Send is enabled only when a type is chosen and there is some description text
+  // Send uses aria-disabled instead of the disabled attribute so tapping it never steals focus:
+  // the keyboard stays open when Send is tapped with an empty description.
+  function setSendEnabled(on) { send.setAttribute('aria-disabled', on ? 'false' : 'true'); }
+  ['mousedown', 'pointerdown'].forEach(ev => send.addEventListener(ev, e => e.preventDefault()));
+  // Fallback for browsers that still move focus: put the cursor straight back
+  desc.addEventListener('blur', e => {
+    if (e.relatedTarget === send && send.getAttribute('aria-disabled') === 'true') desc.focus({ preventScroll: true });
+  });
+
+  function updateSend() {
+    if (tab === 'report') {
+      setSendEnabled(confirmed && desc.value.trim().length >= 1);
+    } else {
+      setSendEnabled(rating > 0 || $('fb').value.trim().length > 0);
+    }
+  }
+  desc.addEventListener('input', () => { $('err').classList.remove('show'); updateSend(); });
+  desc.addEventListener('focus', () => showKeyboard(desc));
+  $('fb').addEventListener('focus', () => showKeyboard($('fb')));
+
+  /* ---------- Simulated keyboard (desktop preview) ---------- */
+  const phone = document.querySelector('.phone');
+  const kb = $('kb');
+  const nativeKeyboard = window.matchMedia('(pointer: coarse)').matches; // real phone: use its own keyboard
+  let kbTarget = null, shift = false, symbols = false;
+
+  const LETTERS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+  const SYMBOLS = ['@#₹_&-+()/', '*"\':;!?', '%=[]{}<'];
+
+  function renderKeyboard() {
+    const rows = symbols ? SYMBOLS : LETTERS;
+    const k = (ch) => `<button class="key" data-k="${ch === '"' ? '&quot;' : ch}">${shift && !symbols ? ch.toUpperCase() : ch}</button>`;
+    kb.innerHTML = `
+      <div class="kb-tools">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="#C4C7CF"><rect x="1" y="1" width="9" height="9" rx="3"/><rect x="12" y="1" width="9" height="9" rx="3"/><rect x="1" y="12" width="9" height="9" rx="3"/><rect x="12" y="12" width="9" height="9" rx="3"/></svg>
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#C4C7CF" stroke-width="2"><rect x="2" y="2" width="18" height="18" rx="4"/><path d="M7 13c2 2 6 2 8 0"/></svg>
+        <span>GIF</span>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#C4C7CF"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7 7 0 0 0-1.7-1L14.9 3h-4l-.4 2.9a7 7 0 0 0-1.7 1l-2.5-1-2 3.5L6.4 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7 7 0 0 0 1.7 1l.4 2.9h4l.4-2.9a7 7 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>
+        <span>G&#8644;</span>
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#C4C7CF" stroke-width="2"><path d="M11 2a9 9 0 1 0 0 18c1.5 0 2-1 1.4-2.2-.7-1.3.2-2.8 1.7-2.8H17a3 3 0 0 0 3-3c0-5.5-4-10-9-10z"/><circle cx="6.5" cy="10" r="1.2" fill="#C4C7CF"/><circle cx="10" cy="6" r="1.2" fill="#C4C7CF"/><circle cx="14.5" cy="7.5" r="1.2" fill="#C4C7CF"/></svg>
+        <span class="kb-mic"><svg width="16" height="20" viewBox="0 0 16 20" fill="#E6E6EA"><rect x="4" y="1" width="8" height="12" rx="4"/><path d="M1 9a7 7 0 0 0 14 0" fill="none" stroke="#E6E6EA" stroke-width="2"/><rect x="7" y="15" width="2" height="4"/></svg></span>
+      </div>
+      <div class="kb-row">${'1234567890'.split('').map(k).join('')}</div>
+      <div class="kb-row">${rows[0].split('').map(k).join('')}</div>
+      <div class="kb-row half">${rows[1].split('').map(k).join('')}</div>
+      <div class="kb-row">
+        <button class="key sp wide ${shift ? 'on' : ''}" data-a="shift" aria-label="Shift">${symbols ? '=\\<' : '&#8679;'}</button>
+        ${rows[2].split('').map(k).join('')}
+        <button class="key sp wide" data-a="back" aria-label="Backspace">&#9003;</button>
+      </div>
+      <div class="kb-row">
+        <button class="key sp wide round" data-a="sym">${symbols ? 'ABC' : '?123'}</button>
+        <button class="key sp" data-k=",">,</button>
+        <button class="key" data-k="🙂" style="font-size:18px">&#9786;</button>
+        <button class="key space" data-k=" "></button>
+        <button class="key sp" data-k=".">.</button>
+        <button class="key sp wide round" data-a="enter" aria-label="Enter">&#8629;</button>
+      </div>`;
+  }
+
+  function insert(text) {
+    const t = kbTarget; if (!t) return;
+    const s = t.selectionStart, e = t.selectionEnd;
+    if (t.value.length - (e - s) + text.length > t.maxLength) return;
+    t.setRangeText(text, s, e, 'end');
+    t.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  // mousedown + preventDefault keeps the caret in the text area while tapping keys
+  kb.addEventListener('mousedown', e => {
+    const key = e.target.closest('.key'); if (!key) { e.preventDefault(); return; }
+    e.preventDefault();
+    if (key.dataset.k !== undefined) {
+      insert(shift && !symbols ? key.dataset.k.toUpperCase() : key.dataset.k);
+      if (shift) { shift = false; renderKeyboard(); }
+      return;
+    }
+    const a = key.dataset.a, t = kbTarget;
+    if (a === 'back' && t) {
+      const s = t.selectionStart, en = t.selectionEnd;
+      if (s !== en) t.setRangeText('', s, en, 'end');
+      else if (s > 0) {
+        // remove a whole emoji / surrogate pair if needed
+        const prev = [...t.value.slice(0, s)].pop() || '';
+        t.setRangeText('', s - prev.length, s, 'end');
+      }
+      t.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    if (a === 'enter') insert('\n');
+    if (a === 'shift') { shift = !shift; renderKeyboard(); }
+    if (a === 'sym') { symbols = !symbols; shift = false; renderKeyboard(); }
+  });
+
+  // Real phone: notice when its own keyboard takes screen space
+  if (nativeKeyboard && window.visualViewport) {
+    const full = window.innerHeight;
+    const check = () => phone.classList.toggle('native-kb', window.visualViewport.height < full * 0.8 || window.innerHeight < full * 0.8);
+    window.visualViewport.addEventListener('resize', check);
+    window.addEventListener('resize', check);
+  }
+
+  function showKeyboard(target) {
+    kbTarget = target;
+    if (nativeKeyboard) return;
+    if (kb.hidden) { renderKeyboard(); kb.hidden = false; phone.classList.add('kb-open'); }
+  }
+  function hideKeyboard() {
+    if (!kb.hidden) { kb.hidden = true; phone.classList.remove('kb-open'); }
+    if (kbTarget) kbTarget.blur();
+    kbTarget = null;
+  }
+  $('kb-down').addEventListener('click', () => {
+    hideKeyboard();
+    if (tab === 'report' && confirmed && !desc.value.trim()) $('err').classList.add('show');
+  });
+
+  /* ---------- Dictation button (simulated) ---------- */
+  const SAMPLE = {
+    issue: 'The app froze on the payment screen this morning around 9 am after I tapped Pay.',
+    billing: 'I was charged twice for my monthly plan on 28 October.',
+    account: 'I cannot change the email address linked to my account.'
+  };
+  $('mic').addEventListener('mousedown', e => e.preventDefault());
+  $('mic').addEventListener('click', () => {
+    const m = $('mic');
+    if (m.classList.contains('listening')) return;
+    m.classList.add('listening');
+    desc.focus(); showKeyboard(desc);
+    const words = SAMPLE[selected].split(' ');
+    let i = 0;
+    const timer = setInterval(() => {
+      if (i >= words.length) { clearInterval(timer); m.classList.remove('listening'); return; }
+      kbTarget = desc;
+      insert((desc.value && !/\s$/.test(desc.value) ? ' ' : '') + words[i++]);
+    }, 140);
+  });
+
+  // Attachments
+  // Attach is disabled in this prototype: tapping just shows the note
+  $('attach').addEventListener('mousedown', e => e.preventDefault()); // keep the keyboard up
+  $('attach').addEventListener('click', e => flashTip(e.currentTarget));
+  fileInput.addEventListener('change', () => {
+    for (const f of fileInput.files) {
+      if (files.length >= 5) { toast('You can attach up to 5 files'); break; }
+      if (f.size > 10 * 1024 * 1024) { toast(`${f.name} is larger than 10 MB`); continue; }
+      files.push(f);
+    }
+    fileInput.value = '';
+    renderChips();
+    if (tab === 'report' && !confirmed) toast('Choose an issue type first');
+  });
+  function renderChips() {
+    chips.innerHTML = files.map((f, i) =>
+      `<div class="chip"><span title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</span><button data-i="${i}" aria-label="Remove ${escapeHtml(f.name)}">&#x2715;</button></div>`).join('');
+  }
+  chips.addEventListener('click', e => {
+    const b = e.target.closest('button[data-i]');
+    if (b) { files.splice(+b.dataset.i, 1); renderChips(); }
+  });
+  function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  // Tabs
+  function setTab(t) {
+    hideKeyboard();
+    tab = t;
+    $('tab-report').classList.toggle('active', t === 'report');
+    $('tab-feedback').classList.toggle('active', t === 'feedback');
+    $('tab-report').setAttribute('aria-selected', t === 'report');
+    $('tab-feedback').setAttribute('aria-selected', t === 'feedback');
+    $('panel-report').hidden = t !== 'report';
+    $('panel-feedback').hidden = t !== 'feedback';
+    if (t === 'report' && !confirmed) openTray();
+    updateSend();
+  }
+  $('tab-report').addEventListener('click', () => setTab('report'));
+  // Share feedback is disabled in this prototype: tapping just shows the note (touch screens have no hover)
+  function flashTip(btn) {
+    const tip = btn.querySelector('.tip') || btn.closest('.tip-wrap').querySelector('.tip');
+    document.querySelectorAll('.tip.show').forEach(t => { if (t !== tip) t.classList.remove('show'); });
+    tip.classList.add('show'); clearTimeout(tip._t); tip._t = setTimeout(() => tip.classList.remove('show'), 2500);
+  }
+  $('tab-feedback').addEventListener('click', e => flashTip(e.currentTarget));
+
+  // Feedback stars
+  const stars = $('stars');
+  stars.innerHTML = [1,2,3,4,5].map(n => `<button class="star" data-n="${n}" aria-label="${n} star">&#9733;</button>`).join('');
+  stars.addEventListener('click', e => {
+    const b = e.target.closest('.star'); if (!b) return;
+    rating = +b.dataset.n;
+    [...stars.children].forEach(s => s.classList.toggle('on', +s.dataset.n <= rating));
+    updateSend();
+  });
+  $('fb').addEventListener('input', () => { $('fbcount').textContent = $('fb').value.length; updateSend(); });
+
+  // Navigation
+  function show(id) {
+    if (id !== 'scr-form') hideKeyboard();
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+  }
+  function resetForm() {
+    selected = null; confirmed = false;
+    select.classList.add('placeholder'); files = []; rating = 0;
+    typeValue.textContent = 'Select issue type';
+    desc.value = ''; $('err').classList.remove('show');
+    hideKeyboard();
+    $('fb').value = ''; $('fbcount').textContent = '0';
+    [...stars.children].forEach(s => s.classList.remove('on'));
+    details.classList.remove('show');
+    renderChips();
+  }
+  function openForm(t) {
+    resetForm();
+    show('scr-form');
+    setTab(t);
+    if (t === 'report') {
+      openTray();   // auto open: one less tap since this is the only control on the form
+    }
+  }
+  $('open-report').addEventListener('click', () => openForm('report'));
+  $('open-feedback').addEventListener('click', e => flashTip(e.currentTarget));
+  document.querySelectorAll('.proto-off').forEach(el => el.addEventListener('click', e => flashTip(e.currentTarget)));
+  $('back').addEventListener('click', () => show('scr-help'));
+  $('done-back').addEventListener('click', () => show('scr-help'));
+  $('done-ok').addEventListener('click', () => show('scr-help'));
+
+  send.addEventListener('click', () => {
+    // Belt and braces: re-check the required description at tap time, not only the button state
+    updateSend();
+    if (send.getAttribute('aria-disabled') === 'true') return;
+    if (tab === 'report' && (!confirmed || !desc.value.trim())) return;
+        // Dummy confirmation: makes clear this is not the real app's post-submit screen
+    $('done-title').textContent = 'Dummy page';
+    $('done-text').textContent = 'This page only ends the prototype. It is not what the real app shows after you tap Send, and nothing was submitted.';
+    $('done-ref').hidden = true;
+    show('scr-done');
+  });
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // Live clock in the status bar
+  function tick() {
+    const d = new Date();
+    $('clock').textContent = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+  tick(); setInterval(tick, 30000);
+})();
+</script>
+</body>
+</html>

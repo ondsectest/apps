@@ -41,6 +41,12 @@ account, no data collected.
 - [README](./PSSS/README.md) — architecture and the design decisions behind it
 - [INSTALL](./PSSS/INSTALL.md) — loading it in Chrome, permissions it asks for, troubleshooting
 
+## [Wispr Flow](./Wispr%20Flow)
+
+UX prototypes for Wispr Flow: small, working pages that each show one improvement, such as a
+shorter "Report an issue" journey and a clearer admin-locked setting. Open the folder for the full
+list.
+
 ## Licence
 
 MIT. Fork it, copy it, modify it, ship it commercially. See [LICENSE](./LICENSE).
