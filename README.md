@@ -43,16 +43,9 @@ account, no data collected.
 
 ## [Wispr Flow](./Wispr%20Flow)
 
-UX prototypes for Wispr Flow.
-
-- [Better UX: Shorter User Journeys in Single-Task Forms](./Wispr%20Flow/Better%20UX%20Shorter%20User%20Journeys%20in%20Single-Task%20Forms)
-  is a redesign of the "Report an issue" screen that saves two taps. The issue type list opens on
-  its own, radio buttons replace checkboxes, and choosing a type puts the cursor straight into the
-  description. Plain HTML and JavaScript in one file, with a short demo video.
-- [Better UX: Explaining Settings Locked by an Admin](./Wispr%20Flow/Better%20UX%20Explaining%20Settings%20Locked%20by%20an%20Admin)
-  makes the admin-locked "Improve the model for everyone" toggle look locked rather than off, shows
-  a "Managed by your organization" badge, and explains the lock on tap or hover instead of
-  silently ignoring the tap. Plain HTML and JavaScript in one file.
+UX prototypes for Wispr Flow: small, working pages that each show one improvement, such as a
+shorter "Report an issue" journey and a clearer admin-locked setting. Open the folder for the full
+list.
 
 ## Licence
 
