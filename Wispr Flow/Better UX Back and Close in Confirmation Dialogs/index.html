@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Better UX: Back and Close in Confirmation Dialogs</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #6B2F8F;
+    --purple-soft: #F3E8FB;
+    --ink: #1C1B1F;
+    --muted: #77737C;
+    --bg: #F4F4F4;
+    --card: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Figtree", system-ui, sans-serif; color: var(--ink);
+    background: #E9E6EE; display: flex; align-items: center; justify-content: center;
+  }
+  .phone {
+    width: 390px; height: 844px; background: var(--bg);
+    border: 10px solid #111; border-radius: 44px; box-shadow: 0 30px 60px rgba(0,0,0,.25);
+    position: relative; overflow: hidden; display: flex; flex-direction: column;
+  }
+  @media (max-width: 500px) {
+    body { display: block; background: var(--bg); }
+    .phone { width: 100%; height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
+    .status, .navbar { display: none !important; }
+  }
+
+  .status { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 26px; font-size: 14px; font-weight: 500; color: #333; }
+  .status .sig { display: flex; gap: 6px; align-items: center; font-size: 10px; font-weight: 600; }
+  .bars { display: flex; gap: 2px; align-items: flex-end; }
+  .bars i { display: block; width: 3px; background: #333; border-radius: 1px; }
+  .battery { width: 10px; height: 16px; border: 1.5px solid #555; border-radius: 2px; position: relative; }
+  .battery::after { content: ""; position: absolute; left: 1px; right: 1px; bottom: 1px; height: 5px; background: #555; }
+
+  .appbar { height: 56px; flex: none; display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; padding: 0 8px; background: var(--bg); }
+  .appbar h1 { text-align: center; font-size: 21px; font-weight: 600; }
+  .icon-btn { width: 44px; height: 44px; border: 0; background: none; border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
+
+  .scroll { flex: 1; overflow-y: auto; padding: 6px 14px 200px; }
+  .section { font-size: 13px; font-weight: 600; letter-spacing: .04em; color: var(--muted); margin: 22px 6px 10px; }
+  .card { background: var(--card); border-radius: 18px; margin-bottom: 10px; overflow: hidden; }
+  .row {
+    width: 100%; border: 0; background: none; text-align: left; font-family: inherit; color: inherit;
+    display: flex; align-items: center; gap: 14px; padding: 18px 16px 18px 20px; cursor: pointer; position: relative;
+  }
+  .row + .row { border-top: 1px solid #F0EEF2; }
+  .row .text { flex: 1; min-width: 0; }
+  .row .title { display: block; font-size: 17px; font-weight: 600; }
+  .row .sub { display: block; }
+  .row .sub { font-size: 14.5px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+  .row .sub.clip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chev { flex: none; }
+
+  /* Ordinary toggle */
+  .switch { flex: none; width: 52px; height: 32px; border-radius: 16px; background: #E9DDF2; position: relative; transition: background .2s; }
+  .switch::after { content: ""; position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .2s; }
+  .switch.on { background: var(--purple); }
+  .switch.on::after { transform: translateX(20px); }
+
+  /* Locked toggle: clearly not interactive, with a lock inside the thumb */
+  .row.locked .title { color: #5B5760; }
+  /* Same off colour as the ordinary toggle below; the lock in the thumb carries the 'locked' meaning */
+  .switch.lock { background: #E9DDF2; }
+  .switch.lock::after { display: none; }
+  .switch.lock .knob {
+    position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.18); display: grid; place-items: center;
+  }
+  .row.locked.shake .switch { animation: shake .35s ease; }
+  @keyframes shake { 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+
+  .managed {
+    display: flex; width: fit-content; align-items: center; gap: 5px; margin-top: 6px;
+    background: #EFEAF3; color: #4E3A5C; font-size: 12.5px; font-weight: 600;
+    padding: 4px 9px 4px 7px; border-radius: 12px;
+  }
+
+  .version { font-size: 14px; font-weight: 600; letter-spacing: .04em; color: var(--muted); margin: 26px 6px 8px; }
+
+  /* Tooltip on hover (mouse users) */
+  .tip {
+    position: absolute; right: 12px; bottom: calc(100% - 6px); z-index: 20; width: 250px;
+    background: #2B2930; color: #fff; font-size: 13px; line-height: 1.4; padding: 10px 12px; border-radius: 8px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.2); opacity: 0; transform: translateY(4px); transition: .15s; pointer-events: none;
+  }
+  .tip::after { content: ""; position: absolute; bottom: -6px; right: 30px; border: 6px solid transparent; border-bottom: 0; border-top-color: #2B2930; }
+  @media (hover: hover) { .row.locked:hover .tip { opacity: 1; transform: none; } }
+
+  /* Snackbar (works the same for touch, mouse and keyboard) */
+  .snack {
+    position: absolute; left: 12px; right: 12px; bottom: 60px; z-index: 30;
+    background: #2B2930; color: #fff; border-radius: 12px; padding: 14px 14px 14px 16px;
+    display: flex; gap: 12px; align-items: flex-start; box-shadow: 0 10px 24px rgba(0,0,0,.25);
+    transform: translateY(20px); opacity: 0; pointer-events: none; transition: .22s ease;
+  }
+  @media (max-width: 500px) { .snack { bottom: 16px; } }
+  .snack.show { transform: none; opacity: 1; pointer-events: auto; }
+  .snack .ico { flex: none; width: 32px; height: 32px; border-radius: 50%; background: #45404D; display: grid; place-items: center; margin-top: 1px; }
+  .snack .msg { flex: 1; font-size: 14px; line-height: 1.4; }
+  .snack .msg b { display: block; font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .snack button { flex: none; border: 0; background: none; color: #D7B8EE; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; padding: 6px 4px; align-self: center; }
+
+  .navbar { height: 48px; flex: none; display: flex; justify-content: space-around; align-items: center; background: #8A8A8E; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.5); z-index: 40; display: none; }
+  .scrim.show { display: block; }
+  .overlay { position: absolute; inset: 0; z-index: 41; overflow-y: auto; padding: 16px; display: none; flex-direction: column; }
+  .overlay.show { display: flex; }
+  .dialog {
+    margin: auto 8px; background: #23252F; color: #fff; border-radius: 26px; padding: 26px 26px 24px;
+    position: relative; display: none;
+  }
+  .dialog.show { display: block; animation: pop .18s ease-out; }
+  .dialog.back-in { animation: slideback .2s ease-out; }
+  @keyframes pop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+  @keyframes slideback { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
+  .dialog h2 { font-size: 22px; font-weight: 500; }
+  .dialog .dsub { font-size: 17px; line-height: 1.55; color: #A6A7B1; margin-top: 6px; }
+  .dialog.center h2, .dialog.center .dsub { text-align: center; }
+  .dialog.center h2 { padding: 0 30px; }
+  .opts { margin-top: 14px; }
+  .opt-r { display: flex; align-items: center; gap: 16px; padding: 13px 0; font-size: 18px; cursor: pointer; border: 0; background: none; color: #fff; font-family: inherit; width: 100%; text-align: left; }
+  .opt-r .rad { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #C9CAD3; display: grid; place-items: center; flex: none; }
+  .opt-r[aria-checked="true"] .rad { border-color: #A8C7FA; }
+  .opt-r[aria-checked="true"] .rad::after { content: ""; width: 12px; height: 12px; border-radius: 50%; background: #A8C7FA; }
+  .dbtn {
+    -webkit-appearance: none; appearance: none; height: 56px; border-radius: 12px; border: 0;
+    font-family: inherit; font-size: 17px; font-weight: 600; cursor: pointer; padding: 0 12px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .dbtn.light { background: #F2F1F5; color: #2B2930; }
+  .dbtn.danger { background: #ECDCFD; color: #1C1B1F; border: 2px solid #ECDCFD; }
+  .dbtn.full { width: 100%; margin-top: 18px; }
+  .drow { display: flex; gap: 14px; margin-top: 26px; }
+  .drow .dbtn { flex: 1; line-height: 1.25; }
+  .nowrap { white-space: nowrap; }
+  .lbl2 { display: block; text-align: center; }
+  .xbtn {
+    -webkit-appearance: none; appearance: none; position: absolute; top: 14px; right: 14px;
+    width: 40px; height: 40px; border-radius: 50%; border: 0; background: #34363F; color: #E6E6EA;
+    display: grid; place-items: center; cursor: pointer;
+  }
+  .xbtn:hover, .xbtn:focus-visible { background: #45474F; outline: none; }
+  .dbtn:focus-visible { outline: 3px solid #A8C7FA; outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="status">
+    <span id="clock">10:19</span>
+    <span class="sig"><span>Vo<br>NR</span><span>5G+</span>
+      <span class="bars"><i style="height:4px"></i><i style="height:7px"></i><i style="height:10px"></i><i style="height:13px"></i></span>
+      <span class="battery"></span></span>
+  </div>
+
+  <div class="appbar">
+    <button class="icon-btn proto" aria-label="Back" data-name="Back"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+    <h1>Settings</h1><span></span>
+  </div>
+
+  <div class="scroll">
+    <div class="card">
+      <button class="row proto" data-name="Languages">
+        <span class="text"><span class="title">Languages</span>
+          <span class="sub">Hindi (हिन्दी) · Pashto (پښتو) · Portuguese (Português) · Croatian (Hrvatski) · Haitian…</span></span>
+        <svg class="chev" width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#1C1B1F" stroke-width="2.6"><path d="M2 2l8 8-8 8"/></svg>
+      </button>
+    </div>
+    <div class="card">
+      <button class="row proto" data-name="Flow Bubble Size"><span class="text"><span class="title">Flow Bubble Size</span></span>
+        <svg class="chev" width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#1C1B1F" stroke-width="2.6"><path d="M2 2l8 8-8 8"/></svg></button>
+    </div>
+    <div class="card">
+      <button class="row proto" data-name="Flow Bubble Opacity"><span class="text"><span class="title">Flow Bubble Opacity</span></span>
+        <svg class="chev" width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#1C1B1F" stroke-width="2.6"><path d="M2 2l8 8-8 8"/></svg></button>
+    </div>
+    <div class="card">
+      <button class="row proto" data-name="Add Wispr Flow to LinkedIn">
+        <span class="text"><span class="title">Add Wispr Flow to LinkedIn</span>
+          <span class="sub">Showcase Wispr Flow under Connected apps on your LinkedIn profile</span></span>
+        <svg class="chev" width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#1C1B1F" stroke-width="2.6"><path d="M2 2l8 8-8 8"/></svg>
+      </button>
+    </div>
+
+    <div class="section">DATA &amp; PRIVACY</div>
+    <div class="card" style="overflow:visible">
+      <!-- Locked by organization policy -->
+      <div class="row locked" id="locked" role="switch" aria-checked="false" aria-disabled="true" tabindex="0"
+           aria-label="Improve the model for everyone" aria-describedby="locked-why">
+        <span class="text">
+          <span class="title">Improve the model for everyone</span>
+          <span class="managed">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="#4E3A5C"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4h2a2 2 0 0 1 2 2v10h-6v-4h-4v4H4zm4-14v2h2V7H8zm4 0v2h2V7h-2zm-4 4v2h2v-2H8zm4 0v2h2v-2h-2z"/></svg>
+            Managed by your organization
+          </span>
+          <span class="sub" id="locked-why">Your organization does not allow data to be used for model training</span>
+        </span>
+        <span class="switch lock" aria-hidden="true"><span class="knob">
+          <svg width="12" height="13" viewBox="0 0 12 14" fill="#77737C"><path d="M2 6V4.5a4 4 0 0 1 8 0V6h.5A1.5 1.5 0 0 1 12 7.5v5A1.5 1.5 0 0 1 10.5 14h-9A1.5 1.5 0 0 1 0 12.5v-5A1.5 1.5 0 0 1 1.5 6H2zm2 0h4V4.5a2 2 0 0 0-4 0V6z"/></svg>
+        </span></span>
+        <span class="tip" aria-hidden="true">Locked by your organization. Your admin has turned off model training for your account.</span>
+      </div>
+
+      <!-- Ordinary, working toggle for contrast -->
+      <div class="row" id="cloud" role="switch" aria-checked="false" tabindex="0" aria-label="Dictation cloud storage">
+        <span class="text"><span class="title">Dictation cloud storage</span>
+          <span class="sub">Stores transcription data on Wispr servers to enable features that require cross-device access to your data</span></span>
+        <span class="switch" id="cloud-switch" aria-hidden="true"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="row" id="open-local"><span class="text"><span class="title">Local data storage</span><span class="sub" id="local-val">Keep stored</span></span>
+        <svg class="chev" width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#1C1B1F" stroke-width="2.6"><path d="M2 2l8 8-8 8"/></svg></button>
+    </div>
+
+    <div class="version">APP VERSION 2.8.3</div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <div class="overlay" id="overlay">
+    <!-- Step 1: choose -->
+    <div class="dialog" id="dlg-choose" role="dialog" aria-modal="true" aria-labelledby="c-title" aria-describedby="c-sub">
+      <h2 id="c-title">Local data storage</h2>
+      <p class="dsub" id="c-sub">This applies to every device where you use Wispr Flow.</p>
+      <div class="opts" role="radiogroup" aria-label="Local data storage">
+        <button class="opt-r" role="radio" aria-checked="true" data-v="Keep stored"><span class="rad"></span>Keep stored</button>
+        <button class="opt-r" role="radio" aria-checked="false" data-v="Auto-delete after 24 hours"><span class="rad"></span>Auto-delete after 24 hours</button>
+        <button class="opt-r" role="radio" aria-checked="false" data-v="Never store"><span class="rad"></span>Never store</button>
+      </div>
+      <button class="dbtn light full" id="c-cancel">Cancel</button>
+    </div>
+
+    <!-- Step 2: confirm Never store -->
+    <div class="dialog center" id="dlg-confirm" role="alertdialog" aria-modal="true" aria-labelledby="n-title" aria-describedby="n-sub">
+      <button class="xbtn" id="n-close" aria-label="Close without changing anything" title="Close without changing anything">
+        <svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
+      </button>
+      <h2 id="n-title"></h2>
+      <p class="dsub" id="n-sub"></p>
+      <div class="drow">
+        <button class="dbtn light" id="n-back">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg>Back
+        </button>
+        <button class="dbtn danger" id="n-delete"></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="snack" id="snack" role="status" aria-live="polite">
+    <span class="ico" id="snack-ico"></span>
+    <span class="msg" id="snack-msg"></span>
+    <button id="snack-btn">Got it</button>
+  </div>
+
+  <div class="navbar" aria-hidden="true">
+    <svg width="22" height="16" viewBox="0 0 22 16" stroke="#E8E8E8" stroke-width="2"><path d="M2 2h18M2 8h18M2 14h18"/></svg>
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#E8E8E8" stroke-width="2"><circle cx="11" cy="11" r="9"/></svg>
+    <svg width="14" height="22" viewBox="0 0 14 22" fill="none" stroke="#E8E8E8" stroke-width="2"><path d="M12 2L3 11l9 9"/></svg>
+  </div>
+</div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const snack = $('snack');
+  let timer;
+
+  const LOCK_ICON = '<svg width="14" height="16" viewBox="0 0 12 14" fill="#fff"><path d="M2 6V4.5a4 4 0 0 1 8 0V6h.5A1.5 1.5 0 0 1 12 7.5v5A1.5 1.5 0 0 1 10.5 14h-9A1.5 1.5 0 0 1 0 12.5v-5A1.5 1.5 0 0 1 1.5 6H2zm2 0h4V4.5a2 2 0 0 0-4 0V6z"/></svg>';
+  const INFO_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/></svg>';
+
+  function showSnack(icon, html, ms) {
+    $('snack-ico').innerHTML = icon;
+    $('snack-msg').innerHTML = html;
+    snack.classList.add('show');
+    clearTimeout(timer);
+    timer = setTimeout(hideSnack, ms || 5000);
+  }
+  function hideSnack() { snack.classList.remove('show'); }
+  $('snack-btn').addEventListener('click', hideSnack);
+
+  // Locked setting: explain instead of silently ignoring the tap
+  const locked = $('locked');
+  function explainLocked() {
+    locked.classList.remove('shake'); void locked.offsetWidth; locked.classList.add('shake');
+    try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
+    // Keep the setting visible above the message
+    locked.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    showSnack(LOCK_ICON,
+      '<b>Managed by your organization</b>Your admin turned off model training, so you can\'t change this here. Ask your workspace admin if you need it.',
+      6000);
+  }
+  locked.addEventListener('click', explainLocked);
+  locked.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); explainLocked(); } });
+
+  // Working toggle, for contrast
+  const cloud = $('cloud'), cloudSwitch = $('cloud-switch');
+  function toggleCloud() {
+    const on = cloud.getAttribute('aria-checked') !== 'true';
+    cloud.setAttribute('aria-checked', on);
+    cloudSwitch.classList.toggle('on', on);
+  }
+  cloud.addEventListener('click', toggleCloud);
+  cloud.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCloud(); } });
+
+  // Everything else is outside this prototype
+  document.querySelectorAll('.proto').forEach(el => el.addEventListener('click', () => {
+    showSnack(INFO_ICON, `This is just a prototype of the Back and Close buttons, so ${el.dataset.name} is disabled.`, 3000);
+  }));
+
+  /* ---------- Local data storage: choose, then confirm ---------- */
+  const overlay = $('overlay'), scrim = $('scrim'), choose = $('dlg-choose'), confirmD = $('dlg-confirm');
+  let saved = 'Keep stored';   // the value actually applied
+  const CHECK_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  function markSelected(v) {
+    choose.querySelectorAll('.opt-r').forEach(o => o.setAttribute('aria-checked', o.dataset.v === v));
+  }
+  function showStep(d, back) {
+    [choose, confirmD].forEach(x => x.classList.remove('show', 'back-in'));
+    d.classList.add('show');
+    if (back) d.classList.add('back-in');
+    const first = d === confirmD ? $('n-back') : choose.querySelector('[aria-checked="true"]');
+    setTimeout(() => first && first.focus({ preventScroll: true }), 30);
+  }
+  function openTask() {
+    hideSnack();
+    markSelected(saved);          // always start from what is really saved
+    overlay.classList.add('show'); scrim.classList.add('show');
+    showStep(choose);
+  }
+  function closeTask() {
+    overlay.classList.remove('show'); scrim.classList.remove('show');
+    [choose, confirmD].forEach(x => x.classList.remove('show'));
+    $('open-local').focus({ preventScroll: true });
+  }
+  function apply(v, msg) {
+    saved = v; $('local-val').textContent = v;
+    closeTask();
+    showSnack(CHECK_ICON, msg, 4000);
+  }
+
+  $('open-local').addEventListener('click', openTask);
+  $('c-cancel').addEventListener('click', closeTask);
+  // Options that delete data ask first, using the wording from the real app
+  const CONFIRM = {
+    'Auto-delete after 24 hours': {
+      title: 'Auto-delete data after 24 hours?',
+      sub: 'This deletes transcripts and audio older than 24 hours on every device where you use Wispr Flow.',
+      ok: '<span class="lbl2"><span class="nowrap">Turn on</span><br><span class="nowrap">auto-delete</span></span>',
+      msg: '<b>Set to Auto-delete after 24 hours</b>This is a prototype only, so no transcripts or audio were deleted.'
+    },
+    'Never store': {
+      title: 'Never store data on your devices?',
+      sub: 'This deletes all transcripts and audio stored on every device where you use Wispr Flow, and stops storing new transcripts or audio on any device.',
+      ok: 'Delete all data',
+      msg: '<b>Set to Never store</b>This is a prototype only, so no transcripts or audio were deleted.'
+    }
+  };
+  let pending = null;
+  choose.querySelectorAll('.opt-r').forEach(o => o.addEventListener('click', () => {
+    markSelected(o.dataset.v);
+    const c = CONFIRM[o.dataset.v];
+    if (o.dataset.v === saved) {
+      setTimeout(closeTask, 150);
+    } else if (c) {
+      pending = o.dataset.v;
+      $('n-title').textContent = c.title; $('n-sub').textContent = c.sub; $('n-delete').innerHTML = c.ok;
+      setTimeout(() => showStep(confirmD), 150);     // ask before deleting anything
+    } else if (false) {
+      setTimeout(closeTask, 150);
+    } else {
+      setTimeout(() => apply(o.dataset.v, `<b>Set to ${o.dataset.v}</b>This is a prototype only, so no real setting was changed.`), 150);
+    }
+  }));
+
+  // Back: return to the three options, nothing changed, previous choice still selected
+  $('n-back').addEventListener('click', () => { markSelected(saved); showStep(choose, true); });
+  // Close: leave the whole task, nothing changed
+  $('n-close').addEventListener('click', closeTask);
+  $('n-delete').addEventListener('click', () => apply(pending, CONFIRM[pending].msg));
+
+  // Tapping outside closes; Escape (like Android's back gesture) steps back first
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeTask(); });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape' || !overlay.classList.contains('show')) return;
+    if (confirmD.classList.contains('show')) { markSelected(saved); showStep(choose, true); } else closeTask();
+  });
+
+  function tick() { const d = new Date(); $('clock').textContent = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  tick(); setInterval(tick, 30000);
+})();
+</script>
+</body>
+</html>
