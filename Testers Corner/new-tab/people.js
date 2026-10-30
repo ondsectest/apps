@@ -25,7 +25,7 @@ const PEOPLE = [
     slug: "robert-sabourin",
     name: "Robert Sabourin",
     known: "Author of “I Am a Bug!”",
-    url: "https://www.amibug.com/",
+    url: "mailto:RobSab@gmail.com",
     photo: "people/robert-sabourin.jpg",
   },
   {

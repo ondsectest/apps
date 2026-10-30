@@ -122,7 +122,9 @@
       const a = document.createElement("a");
       a.className = "person";
       a.href = person.url;
-      a.title = `${person.name}: ${person.known}`;
+      a.title = person.url.startsWith("mailto:")
+        ? `Email ${person.name} (${person.url.slice(7)})`
+        : `${person.name}: ${person.known}`;
 
       a.style.setProperty("--i", i); // staggers the entrance animation
       const avatar = document.createElement("span");
