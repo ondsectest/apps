@@ -44,8 +44,9 @@ account, no data collected.
 ## [Wispr Flow](./Wispr%20Flow)
 
 UX prototypes for Wispr Flow: small, working pages that each show one improvement, such as a
-shorter "Report an issue" journey, a clearer admin-locked setting, consistent punctuation and
-clearer confirmation dialogs. Open the folder for the full list.
+shorter "Report an issue" journey, a clearer admin-locked setting, consistent punctuation,
+clearer confirmation dialogs and a help animation that survives lock and unlock. Open the folder
+for the full list.
 
 ## Licence
 
