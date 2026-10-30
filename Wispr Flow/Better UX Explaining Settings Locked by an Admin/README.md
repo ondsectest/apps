@@ -8,7 +8,7 @@ On the Android Settings screen, "Improve the model for everyone" looks like an o
 
 ## The idea
 
-1. **The toggle looks locked, not off.** It is grey with a dashed outline and a lock inside the thumb.
+1. **The toggle keeps the same look and colours as every other toggle,** so off still means off. A lock inside the thumb is the only change to the toggle itself. Recolouring it grey would give the same state two colours and blur what each colour means.
 2. **The reason is visible before anyone taps.** A "Managed by your organization" badge sits under the setting's name.
 3. **Every attempt gets an answer.**
    - **Phone:** a tap gives a small shake and a short vibration where supported, scrolls the setting into view, and shows a message: "Managed by your organization. Your admin turned off model training, so you can't change this here. Ask your workspace admin if you need it."
