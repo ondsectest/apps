@@ -15,7 +15,8 @@ UX prototypes and bugs found while testing the Wispr Flow Android app on a Vivo 
 | [Handling Naughty Strings in Edit Profile](./Handling%20Naughty%20Strings%20in%20Edit%20Profile) | Edit Profile with a name full of naughty strings: special characters, stacked marks and line breaks. In the app, Edit Profile shows only the first line, so after renaming to Santhosh Tuppad the old lines stay on the card. The fix shows and cleans the whole name, so only Santhosh Tuppad remains. |
 | [Slower LinkedIn Help Animation](./Slower%20LinkedIn%20Help%20Animation) | The help animation on Add Wispr Flow to your LinkedIn profile, where the details sheet shows for only about 0.3 seconds and dark wedges appear in its bottom corners. The sheet now stays for 3.5 seconds, slides smoothly, and the corners are clean. |
 | [Snippet Too Long: Which Field?](./Snippet%20Too%20Long%20Which%20Field) | A user experience bug in Snippets: with long text, Add shows "Snippet is too long (max 60 characters)" but turns both fields pink, so it is unclear which field is too long or by how much. Includes the bug report and steps to reproduce. |
+| [Stretched Words in Very Casual Style](./Stretched%20Words%20in%20Very%20Casual%20Style) | An improvement request with an animated GIF: in Very Casual or Excited style, saying "whaaaaaaaat" is typed as plain "What", so the tone is lost. |
 
-All prototypes are plain HTML, CSS and JavaScript in a single file, with no build step.
+All prototypes are plain HTML, CSS and JavaScript in a single file, with no build step. Some findings, like Stretched Words in Very Casual Style, are reported with an animated GIF instead.
 
 Prototypes by Santhosh Tuppad.
