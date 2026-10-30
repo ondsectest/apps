@@ -138,7 +138,7 @@
     </div>
     <div class="dlg-actions">
       <button type="button" class="tbtn" id="cancel">Cancel</button>
-      <button type="submit" class="tbtn" id="save" aria-disabled="true">Save</button>
+      <button type="button" class="tbtn" id="save" aria-disabled="true">Save</button>
     </div>
   </form>
 
@@ -215,8 +215,8 @@
   // Keyboard "next" moves to Last name, also with the cursor at the end
   first.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); caretToEnd(last); } });
 
-  dialog.addEventListener('submit', e => {
-    e.preventDefault();
+  // Save runs from the button itself, not a form submit: the artifact viewer's frame blocks form submission
+  function saveProfile() {
     if (!isChanged()) return;               // nothing to save
     const f = first.value.trim(), l = last.value.trim();
     if (!f) { caretToEnd(first); toast('First name can’t be empty.'); return; }
@@ -225,7 +225,11 @@
     $('initials').textContent = (f[0] + (l[0] || '')).toUpperCase();
     closeEdit();
     toast('<b>Profile updated</b>This is a prototype only, so your real profile was not changed.');
-  });
+  }
+  save.addEventListener('click', saveProfile);
+  dialog.addEventListener('submit', e => { e.preventDefault(); saveProfile(); });
+  // Keyboard "Done" in Last name saves, like the button
+  last.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveProfile(); } });
 
   document.querySelectorAll('.proto').forEach(el => el.addEventListener('click', () =>
     toast(`This is just a prototype of Edit Profile, so ${el.dataset.name} is disabled.`)));
