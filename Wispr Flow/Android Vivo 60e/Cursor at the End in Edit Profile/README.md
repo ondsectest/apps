@@ -28,7 +28,6 @@ Tapping Save while it is disabled does nothing, and the cursor and keyboard stay
 - The whole profile area above Manage plan (photo, name, email, plan and stats) is one tap target, and a small pencil on the photo hints that it can be edited.
 - The cursor goes into the field during the same tap, so a real phone raises its keyboard straight away.
 - The first time it opens, a short note explains that the cursor is placed after the last character.
-- A long name stays on one line on the Account card and ends with "..." instead of filling the card over many lines.
 - The stats row wraps instead of cutting off "WPM".
 - First name cannot be saved empty.
 
