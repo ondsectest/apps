@@ -137,6 +137,10 @@
   .td .x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #F1EFF3; cursor: pointer; display: grid; place-items: center; }
   .td .row { display: flex; gap: 8px; margin-top: 12px; }
   .td .row button { flex: 1; height: 42px; border-radius: 10px; border: 1.5px solid #1C1B1F; background: #fff; font-weight: 600; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .inv-status { display: inline-block; margin-top: 6px; background: #FFF4D6; color: #7A4B00; border: 1.5px solid #F2C14E; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: 700; }
+  .td h4 { font-size: 14px; font-weight: 700; margin-top: 14px; }
+  .td ul, .td ol { margin: 6px 0 0 18px; font-size: 13.5px; line-height: 1.45; color: #3D3A42; }
+  .td li + li { margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -170,6 +174,7 @@
       <div class="gstep" id="gstep">Step 1 of 4: Tap your name to open Edit Profile.</div>
       <div class="gres" id="gres"></div>
       <button id="td-open" aria-haspopup="dialog">Test data</button>
+      <button id="inv-open" aria-haspopup="dialog">Investigation</button>
       <button id="reset">Reset test data</button>
     </div>
     <div class="card profile">
@@ -227,6 +232,34 @@
       <button id="td-copy">Copy test data</button>
       <button id="td-done">Done</button>
     </div>
+  </section>
+
+  <section class="td" id="inv" role="dialog" aria-modal="true" aria-labelledby="inv-title">
+    <button class="x" id="inv-close" aria-label="Close investigation"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+    <h3 id="inv-title">Investigation</h3>
+    <span class="inv-status">Under investigation</span>
+    <h4>What was observed</h4>
+    <p>On a Vivo 60e phone running Android, in Edit Profile:</p>
+    <ul>
+      <li>The <b>First name</b> and <b>Last name</b> fields look like one-line fields, but they behave like a <b>multi-line text area</b>.</li>
+      <li>Selecting the text and dragging down moves the view to <b>more lines below the first one</b>.</li>
+      <li>Those hidden lines still contain the <b>test data characters</b>, in both First name and Last name, even after the visible line was changed to Santhosh and Tuppad.</li>
+    </ul>
+    <h4>What this explains</h4>
+    <p>The field only shows its first line, so changing the name edits only that line. The other lines stay saved and appear on the Account card after saving.</p>
+    <h4>Not yet confirmed</h4>
+    <ul>
+      <li>Whether the fields are built as multi-line inputs on purpose, or are single-line fields that still accept line breaks.</li>
+      <li>Whether line breaks get in only by pasting, or also through other routes such as syncing from another device.</li>
+      <li>Whether other phones and Android versions behave the same way.</li>
+    </ul>
+    <h4>Checks to run next</h4>
+    <ol>
+      <li>In each field, select all, delete, type a short name and save. Does the card clear completely?</li>
+      <li>Paste text with line breaks into a field. Are the line breaks accepted?</li>
+      <li>Repeat on another phone, and in the Mac or Windows app, to see if the extra lines appear there too.</li>
+    </ol>
+    <div class="row"><button id="inv-done">Done</button></div>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -402,6 +435,14 @@
   }
   function closeTD() { $('td').classList.remove('show'); $('td-scrim').classList.remove('show'); $('td-open').focus({ preventScroll: true }); }
   $('td-open').addEventListener('click', openTD);
+
+  // Investigation panel
+  function openInv() { $('inv').classList.add('show'); $('td-scrim').classList.add('show'); $('inv').scrollTop = 0; $('inv-close').focus({ preventScroll: true }); }
+  function closeInv() { $('inv').classList.remove('show'); $('td-scrim').classList.remove('show'); $('inv-open').focus({ preventScroll: true }); }
+  $('inv-open').addEventListener('click', openInv);
+  ['inv-close', 'inv-done'].forEach(id => $(id).addEventListener('click', closeInv));
+  $('td-scrim').addEventListener('click', () => { if ($('inv').classList.contains('show')) closeInv(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('inv').classList.contains('show')) closeInv(); });
   ['td-close', 'td-done', 'td-scrim'].forEach(id => $(id).addEventListener('click', closeTD));
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('td').classList.contains('show')) closeTD(); });
   $('td-copy').addEventListener('click', async () => {

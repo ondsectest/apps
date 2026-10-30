@@ -17,6 +17,24 @@ Seen on a Vivo 60e phone running Android.
 3. Changing First name to Santhosh and Last name to Tuppad, then saving, replaces only that first line.
 4. The Account card then shows **Santhosh Tuppad followed by all the other lines**, which were never visible in Edit Profile and so could not be removed.
 
+## Investigation
+
+Status: **under investigation**. The prototype's **Investigation** button records the details.
+
+Observed on the Vivo 60e:
+
+- The First name and Last name fields look like one-line fields but behave like a multi-line text area.
+- Selecting the text and dragging down moves the view to more lines below the first one.
+- Those hidden lines still contain the test data characters in both fields, even after the visible line was changed to Santhosh and Tuppad.
+
+Not yet confirmed: whether the fields are multi-line on purpose or single-line fields that accept line breaks, how line breaks get in (pasting or other routes), and whether other phones behave the same.
+
+Checks to run next:
+
+1. In each field, select all, delete, type a short name and save. Does the card clear completely?
+2. Paste text with line breaks into a field. Are the line breaks accepted?
+3. Repeat on another phone, and in the Mac or Windows app.
+
 ## The proposed fix
 
 1. **Edit Profile shows the whole name,** so replacing it replaces all of it.
