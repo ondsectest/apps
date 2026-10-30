@@ -70,6 +70,9 @@
   .acts { display: flex; justify-content: flex-end; gap: 6px; margin-top: 22px; }
   .tbtn { border: 0; background: none; font-family: "Roboto", sans-serif; font-size: 16px; font-weight: 500; padding: 10px 16px; border-radius: 20px; cursor: pointer; }
   .tbtn.add { color: var(--purple); }
+  /* Add stays disabled (grey) until both fields have text, as in the app */
+  .tbtn.add[aria-disabled="true"] { color: #9A96A0; cursor: default; }
+  .tbtn.add[aria-disabled="true"]:hover { background: none; }
   .tbtn:hover { background: rgba(0,0,0,.05); }
 
   /* Bug details */
@@ -138,12 +141,12 @@
     <div class="scrim" id="scrim"></div>
     <div class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="d-title">
       <h3 id="d-title">Add snippet</h3>
-      <input class="f1" id="f1" aria-label="Snippet trigger" placeholder="Trigger phrase" autocomplete="off">
-      <textarea class="f2" id="f2" aria-label="Snippet text" placeholder="Snippet text" rows="1"></textarea>
+      <input class="f1" id="f1" aria-label="Snippet" placeholder="Snippet" autocomplete="off">
+      <textarea class="f2" id="f2" aria-label="Expansion" placeholder="Expansion" rows="1"></textarea>
       <p class="errmsg" id="errmsg" role="alert">Snippet is too long (max 60 characters)</p>
       <div class="acts">
         <button class="tbtn" id="cancel">Cancel</button>
-        <button class="tbtn add" id="add">Add</button>
+        <button class="tbtn add" id="add" aria-disabled="true">Add</button>
       </div>
     </div>
 
@@ -223,6 +226,12 @@
 
   // Add snippet dialog
   const dialog = $('dialog'), f1 = $('f1'), f2 = $('f2');
+  const add = $('add');
+  const bothFilled = () => f1.value.trim() !== '' && f2.value.trim() !== '';
+  function updateAdd() { add.setAttribute('aria-disabled', !bothFilled()); }
+  [f1, f2].forEach(f => f.addEventListener('input', updateAdd));
+  // Tapping Add while it is disabled does nothing and keeps the cursor and keyboard in place
+  ['mousedown', 'pointerdown'].forEach(ev => add.addEventListener(ev, e => { if (!bothFilled()) e.preventDefault(); }));
   function grow() { f2.style.height = 'auto'; f2.style.height = Math.min(f2.scrollHeight + 2, 170) + 'px'; }
   f2.addEventListener('input', grow);
   function openAdd(fill) {
@@ -230,6 +239,7 @@
     f1.value = fill ? TEST.first : ''; f2.value = fill ? TEST.second : '';
     dialog.classList.add('show'); $('scrim').classList.add('show');
     grow();
+    updateAdd();
     f1.focus({ preventScroll: true });
   }
   function closeAdd() { dialog.classList.remove('show', 'err'); $('scrim').classList.remove('show'); }
@@ -244,7 +254,7 @@
      and BOTH fields turn pink, with no hint which field is too long or by how much. */
   $('add').addEventListener('click', () => {
     const a = f1.value.trim(), b = f2.value.trim();
-    if (!a || !b) { toast('Fill in both fields first.'); return; }
+    if (!a || !b) return;   // Add is disabled until both fields have text
     if (a.length > MAX || b.length > MAX) {
       dialog.classList.add('err');
       f2.focus({ preventScroll: true });

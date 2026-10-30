@@ -35,6 +35,7 @@ Seen on a Vivo 60e phone running Android.
 
 - It opens on Home. Tap **Snippets**, then **+**, enter text in both fields and tap **Add**.
 - The red **Bug** button above the phone shows the full bug report and a screenshot from the app, and can open Add snippet with the test data already filled in.
+- **Add** stays disabled (grey) until both **Snippet** and **Expansion** have text, as in the app.
 - A short snippet adds normally to the list, with a message saying it is a prototype only.
 - **Dictionary** and **Style** in the bottom tabs are greyed out and show "Intentionally disabled" when tapped.
 
@@ -46,7 +47,8 @@ Seen on a Vivo 60e phone running Android.
 
 ## Notes
 
-- The Home and empty Snippets screens, and the field placeholders "Trigger phrase" and "Snippet text", are stand-ins; they were not in the screenshots.
+- The field placeholders, **Snippet** and **Expansion**, match the app.
+- The Home and empty Snippets screens are stand-ins; they were not in the screenshots.
 - On a desktop browser the prototype shows a phone frame. On a phone it fills the screen.
 
 Prototype by Santhosh Tuppad.
