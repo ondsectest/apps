@@ -6,8 +6,8 @@ A working prototype of a smoother "Report an issue" screen for Wispr Flow.
 
 The "Report an issue" screen has one job. When a form has a single task and nowhere else to go, the product can take the obvious next step for the user.
 
-1. **The issue type list opens on its own.** No tap on the dropdown first, and nothing is pre-selected, so the choice stays deliberate.
-2. **Radio buttons replace checkboxes,** because only one issue type can be chosen.
+1. **The request type list opens on its own.** No tap on the dropdown first, and nothing is pre-selected, so the choice stays deliberate. The field reads "Request type" while empty, and the label moves onto the field's border once a type is chosen, so it stays visible.
+2. **Radio buttons replace checkboxes,** because only one request type can be chosen. The field, the list and the spacing between options otherwise match the app.
 3. **Choosing a type moves the cursor into the description field** with the keyboard up, ready to type or dictate with Flow.
 4. **Send stays disabled until the description has text.** Tapping it early does nothing and keeps the keyboard open.
 
