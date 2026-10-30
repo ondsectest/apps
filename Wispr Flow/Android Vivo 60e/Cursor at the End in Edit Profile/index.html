@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cursor at the End in Edit Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #1C1B1F; --muted: #6F6B75; --bg: #F4F4F4; --field: #4A5C92; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: "Figtree", system-ui, sans-serif; color: var(--ink); background: #E9E6EE; display: flex; align-items: center; justify-content: center; }
+  button, input { font-family: inherit; color: inherit; -webkit-appearance: none; appearance: none; }
+
+  .phone { width: 390px; height: 844px; background: var(--bg); border: 10px solid #111; border-radius: 44px; box-shadow: 0 30px 60px rgba(0,0,0,.25); position: relative; overflow: hidden; display: flex; flex-direction: column; }
+  @media (max-width: 500px) {
+    body { display: block; background: var(--bg); }
+    .phone { width: 100%; height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
+    .status, .navbar { display: none !important; }
+  }
+  .status { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 26px; font-size: 14px; font-weight: 500; color: #333; }
+  .bars { display: flex; gap: 2px; align-items: flex-end; }
+  .bars i { display: block; width: 3px; background: #333; border-radius: 1px; }
+
+  .appbar { height: 60px; flex: none; display: flex; align-items: center; gap: 14px; padding: 0 8px; }
+  .appbar h1 { font-size: 22px; font-weight: 600; }
+  .icon-btn { width: 44px; height: 44px; border: 0; background: none; border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
+
+  .scroll { flex: 1; overflow-y: auto; padding: 4px 16px 20px; }
+  .card { background: #fff; border-radius: 22px; margin-bottom: 14px; }
+  .profile { padding: 22px 16px 24px; text-align: center; }
+
+  /* The whole area above Manage plan is one tap target */
+  .who {
+    width: 100%; border: 0; background: none; cursor: pointer; border-radius: 16px; padding: 8px 4px 10px;
+    display: flex; flex-direction: column; align-items: center; transition: background .15s;
+  }
+  .who:hover { background: #F7F5F9; }
+  .who:active { background: #EFEBF3; }
+  .who:focus-visible { outline: 3px solid #C9A6E4; outline-offset: 2px; }
+  .avatar { position: relative; width: 112px; height: 112px; border-radius: 50%; background: linear-gradient(135deg, #3A2E48, #6B2F8F); color: #fff; display: grid; place-items: center; font-size: 38px; font-weight: 600; }
+  .avatar .pen { position: absolute; right: 2px; bottom: 2px; width: 32px; height: 32px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.25); display: grid; place-items: center; }
+  .name { font-size: 22px; font-weight: 600; margin-top: 16px; }
+  .email { font-size: 16px; color: var(--muted); margin-top: 4px; }
+  .plan { font-size: 16px; color: #4B4752; margin-top: 10px; }
+  .stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 10px; font-size: 15px; font-weight: 500; margin-top: 12px; }
+  .stats .dot { color: #C2BEC7; }
+  .manage { margin-top: 18px; border: 0; background: #B58AF7; color: #fff; font-size: 17px; font-weight: 600; padding: 14px 28px; border-radius: 12px; cursor: pointer; }
+
+  .row { width: 100%; border: 0; background: none; text-align: left; display: flex; align-items: center; justify-content: space-between; padding: 22px 20px; font-size: 17.5px; font-weight: 500; cursor: pointer; }
+  .row + .row { border-top: 1px solid #F0EEF2; }
+
+  /* Edit Profile dialog, styled like the screenshot */
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 40; display: none; }
+  .scrim.show { display: block; }
+  .dialog {
+    position: absolute; left: 24px; right: 24px; top: 178px; z-index: 41; display: none;
+    background: #ECE9F0; border-radius: 28px; padding: 26px 24px 18px; font-family: "Roboto", system-ui, sans-serif;
+  }
+  .dialog.show { display: block; animation: pop .18s ease-out; }
+  @keyframes pop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+  .dialog h2 { font-size: 26px; font-weight: 400; margin-bottom: 22px; }
+  .field { position: relative; margin-bottom: 20px; }
+  .field input {
+    width: 100%; height: 58px; border: 1.5px solid #77737D; border-radius: 6px; background: transparent;
+    padding: 0 16px; font-size: 17px; font-family: "Roboto", sans-serif; color: var(--ink); caret-color: var(--field);
+  }
+  .field input:focus { outline: none; border: 2.5px solid var(--field); padding: 0 15px; }
+  .field label { position: absolute; left: 12px; top: -9px; padding: 0 4px; background: #ECE9F0; font-size: 13px; color: #49454F; }
+  .field input:focus + label { color: var(--field); }
+  .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+  .tbtn { border: 0; background: none; font-family: "Roboto", sans-serif; font-size: 16px; font-weight: 500; color: #1C1B1F; padding: 12px 16px; border-radius: 20px; cursor: pointer; }
+  .tbtn:hover { background: rgba(0,0,0,.06); }
+  .tbtn[aria-disabled="true"] { color: rgba(28,27,31,.38); cursor: default; }
+  .tbtn[aria-disabled="true"]:hover { background: none; }
+
+  .callout {
+    position: absolute; left: 24px; right: 24px; top: 92px; z-index: 42; display: none;
+    background: #FFF8DC; border: 2px solid #FFD95A; border-radius: 12px; padding: 8px 12px; font-size: 13.5px; line-height: 1.35; color: #1C1B1F;
+  }
+  .callout.show { display: block; }
+  .callout b { font-weight: 700; }
+
+  .navbar { height: 44px; flex: none; display: flex; justify-content: space-around; align-items: center; background: #fff; }
+  .toast {
+    position: absolute; left: 14px; right: 14px; bottom: 60px; z-index: 60; background: #2B2930; color: #fff;
+    padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.4; opacity: 0; transform: translateY(10px); transition: .2s; pointer-events: none;
+  }
+  @media (max-width: 500px) { .toast { bottom: 16px; } }
+  .toast.show { opacity: 1; transform: none; }
+  .toast b { display: block; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="status"><span id="clock">1:02</span>
+    <span class="bars"><i style="height:4px"></i><i style="height:7px"></i><i style="height:10px"></i><i style="height:13px"></i></span></div>
+
+  <div class="appbar">
+    <button class="icon-btn proto" data-name="Back" aria-label="Back"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+    <h1>Account</h1>
+  </div>
+
+  <div class="scroll">
+    <div class="card profile">
+      <button class="who" id="who" aria-label="Edit profile">
+        <span class="avatar" aria-hidden="true"><span id="initials">ST</span>
+          <span class="pen"><svg width="16" height="16" viewBox="0 0 24 24" fill="#1C1B1F"><path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25zM20.7 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>
+        </span>
+        <span class="name" id="name">Santhosh Tuppad</span>
+        <span class="email">ondsectest@gmail.com</span>
+        <span class="plan">Flow Pro</span>
+        <span class="stats"><span>🔥 12 weeks</span><span class="dot">•</span><span>🚀 78.7k words</span><span class="dot">•</span><span>🏆 89 WPM</span></span>
+      </button>
+      <button class="manage proto" data-name="Manage plan">Manage plan</button>
+    </div>
+
+    <div class="card">
+      <button class="row proto" data-name="View privacy policy">View privacy policy
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><path d="M14 3h7v7M21 3l-9 9M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></svg></button>
+      <button class="row proto" data-name="How to use Wispr Flow Android">How to use Wispr Flow Android
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><path d="M14 3h7v7M21 3l-9 9M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></svg></button>
+    </div>
+    <div class="card"><button class="row proto" data-name="Sign out">Sign out</button></div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <div class="callout" id="callout" role="note">The cursor is placed <b>after the last character</b>, so you can keep typing or delete from the end straight away.</div>
+  <form class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-title" novalidate>
+    <h2 id="dlg-title">Edit Profile</h2>
+    <div class="field">
+      <input id="first" autocomplete="given-name" autocapitalize="words" enterkeyhint="next" value="Santhosh">
+      <label for="first">First name</label>
+    </div>
+    <div class="field">
+      <input id="last" autocomplete="family-name" autocapitalize="words" enterkeyhint="done" value="Tuppad">
+      <label for="last">Last name</label>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" class="tbtn" id="cancel">Cancel</button>
+      <button type="submit" class="tbtn" id="save" aria-disabled="true">Save</button>
+    </div>
+  </form>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="navbar" aria-hidden="true">
+    <svg width="22" height="16" viewBox="0 0 22 16" stroke="#888" stroke-width="2"><path d="M2 2h18M2 8h18M2 14h18"/></svg>
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="9"/></svg>
+    <svg width="14" height="22" viewBox="0 0 14 22" fill="none" stroke="#888" stroke-width="2"><path d="M12 2L3 11l9 9"/></svg>
+  </div>
+</div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const dialog = $('dialog'), scrim = $('scrim'), first = $('first'), last = $('last');
+  let saved = { first: 'Santhosh', last: 'Tuppad' };
+  let calloutShown = false;
+
+  function toast(html, ms) {
+    const t = $('toast'); t.innerHTML = html; t.classList.add('show');
+    clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), ms || 3500);
+  }
+
+  // Put the cursor after the last character of a field
+  function caretToEnd(input) {
+    input.focus({ preventScroll: true });
+    const n = input.value.length;
+    input.setSelectionRange(n, n);
+    input.scrollLeft = input.scrollWidth;   // keep the end in view for long names
+  }
+
+  // Save is enabled only when the names differ from what is saved.
+  // Editing back to the original (for example with backspace) disables it again.
+  const save = $('save');
+  function isChanged() { return first.value.trim() !== saved.first || last.value.trim() !== saved.last; }
+  function updateSave() { save.setAttribute('aria-disabled', !isChanged()); }
+  [first, last].forEach(inp => inp.addEventListener('input', updateSave));
+  // Tapping a disabled Save keeps the cursor and keyboard where they are
+  ['mousedown', 'pointerdown'].forEach(ev => save.addEventListener(ev, e => { if (!isChanged()) e.preventDefault(); }));
+
+  function openEdit() {
+    first.value = saved.first; last.value = saved.last;
+    updateSave();
+    dialog.classList.add('show'); scrim.classList.add('show');
+    // Focus inside the same tap so a real phone raises its keyboard,
+    // then put the cursor at the end instead of the start
+    caretToEnd(first);
+    if (!calloutShown) {
+      calloutShown = true;
+      $('callout').classList.add('show');
+      setTimeout(() => $('callout').classList.remove('show'), 4500);
+    }
+  }
+  function closeEdit() {
+    dialog.classList.remove('show'); scrim.classList.remove('show'); $('callout').classList.remove('show');
+  }
+
+  $('who').addEventListener('click', openEdit);
+  $('cancel').addEventListener('click', closeEdit);
+  scrim.addEventListener('click', closeEdit);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && dialog.classList.contains('show')) closeEdit(); });
+
+  // Tapping into a field also lands at the end; a second tap can still place the cursor anywhere
+  [first, last].forEach(inp => inp.addEventListener('focus', () => {
+    if (inp._wasFocused) return;
+    requestAnimationFrame(() => { const n = inp.value.length; inp.setSelectionRange(n, n); });
+  }));
+  [first, last].forEach(inp => {
+    inp.addEventListener('focus', () => { setTimeout(() => inp._wasFocused = true, 0); });
+    inp.addEventListener('blur', () => { inp._wasFocused = false; });
+  });
+
+  // Keyboard "next" moves to Last name, also with the cursor at the end
+  first.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); caretToEnd(last); } });
+
+  dialog.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!isChanged()) return;               // nothing to save
+    const f = first.value.trim(), l = last.value.trim();
+    if (!f) { caretToEnd(first); toast('First name can’t be empty.'); return; }
+    saved = { first: f, last: l };
+    $('name').textContent = (f + ' ' + l).trim();
+    $('initials').textContent = (f[0] + (l[0] || '')).toUpperCase();
+    closeEdit();
+    toast('<b>Profile updated</b>This is a prototype only, so your real profile was not changed.');
+  });
+
+  document.querySelectorAll('.proto').forEach(el => el.addEventListener('click', () =>
+    toast(`This is just a prototype of Edit Profile, so ${el.dataset.name} is disabled.`)));
+
+  function tick() { const d = new Date(); $('clock').textContent = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  tick(); setInterval(tick, 30000);
+})();
+</script>
+</body>
+</html>
