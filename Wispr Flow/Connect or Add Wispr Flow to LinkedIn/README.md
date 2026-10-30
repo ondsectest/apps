@@ -1,4 +1,4 @@
-# Better UX: Help Animation That Survives Lock and Unlock
+# Connect or Add Wispr Flow to LinkedIn
 
 A working prototype of a bug on Wispr Flow's "Add Wispr Flow to your LinkedIn profile" screen, and a proposed fix.
 
