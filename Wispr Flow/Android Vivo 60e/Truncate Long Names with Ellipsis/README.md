@@ -22,9 +22,18 @@ The rest of the card stays exactly where it is, whatever the length of the name.
 | --- | --- |
 | `index.html` | The prototype. Plain HTML, CSS and JavaScript in one file. Open it in any browser. |
 
+## Testing with special characters
+
+The saved name is a set of strings known to cause rendering problems: symbols and accents, Cyrillic, Arabic digits, superscripts and subscripts, and Thai text with many stacked marks.
+
+- **Current app** (switch above the phone): a screenshot of the Account screen today. The name wraps over many lines, and the Thai stacked marks run down the screen over the text below.
+- **Prototype:** the same name stays on one line and ends with "...". The name area clips anything that rises above or drops below the line, so stacked marks cannot spill over the email, plan or stats.
+
 ## Notes
 
-- The prototype starts with the long name from the screenshot already saved, so the truncation is visible straight away. Tap the name to open Edit Profile and try your own; a short name shows in full.
+- The prototype starts with the special-character name already saved, so the truncation is visible straight away. Tap the name to open Edit Profile and try your own; a short name shows in full.
+- Name fields cannot hold line breaks, so each block of test strings is joined with spaces.
+- Save works from the button itself rather than a form submission, so it also works when the page runs inside a sandboxed frame such as an artifact viewer.
 - Saving shows a message saying it is a prototype only, so no real profile was changed.
 - Initials stand in for the profile photo. Back, Manage plan, the links and Sign out show a short note that they are disabled in this prototype.
 - On a desktop browser the prototype shows a phone frame. On a phone it fills the screen.
