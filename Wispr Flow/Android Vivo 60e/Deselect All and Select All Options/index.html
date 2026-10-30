@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deselect All and Select All Options</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #1C1B1F; --muted: #6F6B75; --purple: #6B2F8F; --sel-bg: #FEFEEA; --border: #3F3D45; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: "Figtree", system-ui, sans-serif; color: var(--ink); background: #E9E6EE; display: flex; align-items: center; justify-content: center; }
+  button { font-family: inherit; color: inherit; -webkit-appearance: none; appearance: none; }
+
+  .phone { width: 390px; height: 844px; background: #fff; border: 10px solid #111; border-radius: 44px; box-shadow: 0 30px 60px rgba(0,0,0,.25); position: relative; overflow: hidden; display: flex; flex-direction: column; }
+  @media (max-width: 500px) {
+    body { display: block; background: #fff; }
+    .phone { width: 100%; height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
+    .status, .navbar { display: none !important; }
+  }
+  .status { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 26px; font-size: 14px; font-weight: 500; color: #333; }
+  .bars { display: flex; gap: 2px; align-items: flex-end; }
+  .bars i { display: block; width: 3px; background: #333; border-radius: 1px; }
+
+  .appbar { height: 56px; flex: none; display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; padding: 0 8px; }
+  .appbar h1 { text-align: center; font-size: 21px; font-weight: 600; }
+  .icon-btn { width: 44px; height: 44px; border: 0; background: none; border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
+
+  /* The one new control: a slim summary row with a single bulk action */
+  .bulk {
+    flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    height: 44px; margin: 0 16px; padding: 0 2px; border-bottom: 1px solid #ECEAEF;
+  }
+  .count { font-size: 14.5px; color: var(--muted); }
+  .count b { color: var(--ink); font-weight: 600; }
+  .bulk-btn {
+    border: 0; background: none; color: var(--purple); font-size: 15px; font-weight: 700; cursor: pointer;
+    padding: 8px 10px; margin-right: -10px; border-radius: 18px; min-height: 40px;
+  }
+  .bulk-btn:hover { background: #F4EDF9; }
+  .bulk-btn:focus-visible { outline: 3px solid #C9A6E4; outline-offset: 0; }
+
+  .list { flex: 1; overflow-y: auto; padding: 12px 16px 12px; min-height: 0; }
+  .lang {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    min-height: 64px; padding: 0 22px 0 24px; margin-bottom: 12px; border-radius: 12px;
+    border: 2px solid #D9D6DE; background: #fff; font-size: 18px; font-weight: 500; text-align: left; cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .lang[aria-checked="true"] { background: var(--sel-bg); border-color: var(--border); }
+  .lang .tick { width: 24px; height: 24px; flex: none; opacity: 0; transition: opacity .15s; }
+  .lang[aria-checked="true"] .tick { opacity: 1; }
+  .lang:focus-visible { outline: 3px solid #C9A6E4; outline-offset: 1px; }
+
+  .actions { flex: none; padding: 10px 16px 14px; display: flex; flex-direction: column; gap: 12px; background: #fff; box-shadow: 0 -8px 12px -8px rgba(0,0,0,.08); }
+  .hint { font-size: 13.5px; color: #B3261E; text-align: center; min-height: 0; display: none; }
+  .hint.show { display: block; }
+  .btn { height: 60px; border-radius: 12px; border: 2px solid var(--border); font-size: 19px; font-weight: 600; cursor: pointer; background: #fff; }
+  .btn.save { background: #EADCFB; }
+  .btn.save[aria-disabled="true"] { background: #F4F1F7; color: #A9A4AF; border-color: #CFCBD4; cursor: not-allowed; }
+
+  .navbar { height: 44px; flex: none; display: flex; justify-content: space-around; align-items: center; }
+
+  .snack {
+    position: absolute; left: 14px; right: 14px; bottom: 206px; z-index: 30; background: #2B2930; color: #fff;
+    border-radius: 10px; padding: 12px 8px 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 14.5px; line-height: 1.4;
+    box-shadow: 0 10px 24px rgba(0,0,0,.25); opacity: 0; transform: translateY(10px); transition: .2s; pointer-events: none;
+  }
+  @media (max-width: 500px) { .snack { bottom: 166px; } }
+  .snack.show { opacity: 1; transform: none; pointer-events: auto; }
+  .snack .msg { flex: 1; }
+  .snack .msg b { display: block; }
+  .snack button { border: 0; background: none; color: #D7B8EE; font-size: 14.5px; font-weight: 700; cursor: pointer; padding: 8px 10px; border-radius: 16px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="status"><span id="clock">12:39</span>
+    <span class="bars"><i style="height:4px"></i><i style="height:7px"></i><i style="height:10px"></i><i style="height:13px"></i></span></div>
+
+  <div class="appbar">
+    <button class="icon-btn proto" data-name="Back" aria-label="Back"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+    <h1>Languages</h1><span></span>
+  </div>
+
+  <div class="bulk">
+    <span class="count" id="count" aria-live="polite"></span>
+    <button class="bulk-btn" id="bulk"></button>
+  </div>
+
+  <div class="list" id="list" role="group" aria-label="Languages"></div>
+
+  <div class="actions">
+    <p class="hint" id="hint">Choose at least one language to save.</p>
+    <button class="btn proto" data-name="Add more">Add more</button>
+    <button class="btn save" id="save">Save</button>
+  </div>
+
+  <div class="snack" id="snack" role="status" aria-live="polite">
+    <span class="msg" id="snack-msg"></span>
+    <button id="snack-btn" hidden>Undo</button>
+  </div>
+
+  <div class="navbar" aria-hidden="true">
+    <svg width="22" height="16" viewBox="0 0 22 16" stroke="#888" stroke-width="2"><path d="M2 2h18M2 8h18M2 14h18"/></svg>
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="9"/></svg>
+    <svg width="14" height="22" viewBox="0 0 14 22" fill="none" stroke="#888" stroke-width="2"><path d="M12 2L3 11l9 9"/></svg>
+  </div>
+</div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  // The first nine match the screenshot; the rest show how long the list can get
+  const LANGS = [
+    'Hindi (हिन्दी)', 'Pashto (پښتو)', 'Portuguese (Português)', 'Croatian (Hrvatski)', 'Haitian Creole (Kreyòl Ayisyen)',
+    'Hungarian (Magyar)', 'Yiddish (ייִדיש)', 'Armenian (Հայերեն)', 'Yoruba (Yorùbá)', 'English', 'Kannada (ಕನ್ನಡ)',
+    'Tamil (தமிழ்)', 'Telugu (తెలుగు)', 'Marathi (मराठी)', 'Bengali (বাংলা)', 'Spanish (Español)', 'French (Français)',
+    'German (Deutsch)', 'Italian (Italiano)', 'Dutch (Nederlands)', 'Polish (Polski)', 'Turkish (Türkçe)', 'Greek (Ελληνικά)',
+    'Russian (Русский)', 'Ukrainian (Українська)', 'Arabic (العربية)', 'Japanese (日本語)', 'Korean (한국어)',
+    'Vietnamese (Tiếng Việt)', 'Swahili (Kiswahili)'
+  ];
+  let selected = new Set(LANGS);   // as in the screenshot: everything selected
+  let undoSet = null, timer;
+
+  const TICK = '<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="#1C1B1F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>';
+  const list = $('list');
+  list.innerHTML = LANGS.map((l, i) =>
+    `<button class="lang" role="checkbox" data-i="${i}" aria-checked="true"><span>${l}</span>${TICK}</button>`).join('');
+
+  function render() {
+    list.querySelectorAll('.lang').forEach(b => b.setAttribute('aria-checked', selected.has(LANGS[+b.dataset.i])));
+    const n = selected.size;
+    $('count').innerHTML = `<b>${n}</b> of ${LANGS.length} selected`;
+    // One button, two jobs: clear when anything is selected, select all when nothing is
+    $('bulk').textContent = n > 0 ? 'Deselect all' : 'Select all';
+    $('save').setAttribute('aria-disabled', n === 0);
+    if (n > 0) $('hint').classList.remove('show');
+  }
+
+  function snack(html, withUndo, ms) {
+    $('snack-msg').innerHTML = html;
+    $('snack-btn').hidden = !withUndo;
+    $('snack').classList.add('show');
+    clearTimeout(timer); timer = setTimeout(() => { $('snack').classList.remove('show'); undoSet = null; }, ms || 5000);
+  }
+
+  list.addEventListener('click', e => {
+    const b = e.target.closest('.lang'); if (!b) return;
+    const l = LANGS[+b.dataset.i];
+    // Once the person starts choosing, the Undo is no longer needed
+    if (undoSet) { undoSet = null; $('snack').classList.remove('show'); }
+    selected.has(l) ? selected.delete(l) : selected.add(l);
+    render();
+  });
+
+  $('bulk').addEventListener('click', () => {
+    if (selected.size > 0) {
+      undoSet = new Set(selected);
+      selected.clear();
+      render();
+      list.scrollTo({ top: 0, behavior: 'smooth' });
+      snack(`Deselected ${undoSet.size} language${undoSet.size === 1 ? '' : 's'}. Now pick the one you want.`, true, 6000);
+    } else {
+      LANGS.forEach(l => selected.add(l));
+      render();
+      snack(`Selected all ${LANGS.length} languages.`, false, 3000);
+    }
+  });
+
+  $('snack-btn').addEventListener('click', () => {
+    if (undoSet) { selected = undoSet; undoSet = null; render(); }
+    $('snack').classList.remove('show');
+  });
+
+  $('save').addEventListener('click', () => {
+    if (selected.size === 0) { $('hint').classList.add('show'); return; }
+    const n = selected.size;
+    snack(`<b>Saved ${n} language${n === 1 ? '' : 's'}</b>This is a prototype only, so no real setting was changed.`, false, 4000);
+  });
+
+  document.querySelectorAll('.proto').forEach(el => el.addEventListener('click', () =>
+    snack(`This is just a prototype of Deselect all and Select all, so ${el.dataset.name} is disabled.`, false, 3000)));
+
+  render();
+  function tick() { const d = new Date(); $('clock').textContent = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  tick(); setInterval(tick, 30000);
+})();
+</script>
+</body>
+</html>
