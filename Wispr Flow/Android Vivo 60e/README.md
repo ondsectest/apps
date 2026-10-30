@@ -12,6 +12,7 @@ UX prototypes and bugs found while testing the Wispr Flow Android app on a Vivo 
 | [Deselect All and Select All Options](./Deselect%20All%20and%20Select%20All%20Options) | The Languages screen, where switching from many languages to one meant deselecting each card. A slim row shows the count and one button that reads Deselect all or Select all, with Undo after clearing. Many to one in two taps. |
 | [Cursor at the End in Edit Profile](./Cursor%20at%20the%20End%20in%20Edit%20Profile) | The Edit Profile dialog on the Account screen. The cursor now lands after the last character of First name instead of before the first, and Save is enabled only when a name has actually changed, turning off again if the edit is undone. |
 | [Keyboard Ready in Share Feedback](./Keyboard%20Ready%20in%20Share%20Feedback) | The Share feedback screen, which has only one task. It now opens with the cursor in the feedback box and the keyboard up, ready to type, instead of waiting for a tap on the box. |
+| [Truncate Long Names with Ellipsis](./Truncate%20Long%20Names%20with%20Ellipsis) | The Account card, where a very long saved name filled the card over many lines. The name now stays on one line and ends with "..." when it does not fit, with no tooltip. |
 
 All prototypes are plain HTML, CSS and JavaScript in a single file, with no build step.
 
