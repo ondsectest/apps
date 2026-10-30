@@ -41,6 +41,15 @@ account, no data collected.
 - [README](./PSSS/README.md) — architecture and the design decisions behind it
 - [INSTALL](./PSSS/INSTALL.md) — loading it in Chrome, permissions it asks for, troubleshooting
 
+## [Wispr Flow](./Wispr%20Flow)
+
+UX prototypes for Wispr Flow.
+
+- [Better UX: Shorter User Journeys in Single-Task Forms](./Wispr%20Flow/Better%20UX%20Shorter%20User%20Journeys%20in%20Single-Task%20Forms)
+  is a redesign of the "Report an issue" screen that saves two taps. The issue type list opens on
+  its own, radio buttons replace checkboxes, and choosing a type puts the cursor straight into the
+  description. Plain HTML and JavaScript in one file, with a short demo video.
+
 ## Licence
 
 MIT. Fork it, copy it, modify it, ship it commercially. See [LICENSE](./LICENSE).
