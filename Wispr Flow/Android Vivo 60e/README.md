@@ -13,6 +13,7 @@ UX prototypes and bugs found while testing the Wispr Flow Android app on a Vivo 
 | [Cursor at the End in Edit Profile](./Cursor%20at%20the%20End%20in%20Edit%20Profile) | The Edit Profile dialog on the Account screen. The cursor now lands after the last character of First name instead of before the first, and Save is enabled only when a name has actually changed, turning off again if the edit is undone. |
 | [Keyboard Ready in Share Feedback](./Keyboard%20Ready%20in%20Share%20Feedback) | The Share feedback screen, which has only one task. It now opens with the cursor in the feedback box and the keyboard up, ready to type, instead of waiting for a tap on the box. |
 | [Truncate Long Names with Ellipsis](./Truncate%20Long%20Names%20with%20Ellipsis) | The Account card, where a very long saved name filled the card over many lines. The name now stays on one line and ends with "..." when it does not fit, with no tooltip. |
+| [Slower LinkedIn Help Animation](./Slower%20LinkedIn%20Help%20Animation) | The help animation on Add Wispr Flow to your LinkedIn profile, where the details sheet shows for only about 0.3 seconds and dark wedges appear in its bottom corners. The sheet now stays for 3.5 seconds, slides smoothly, and the corners are clean. |
 
 All prototypes are plain HTML, CSS and JavaScript in a single file, with no build step.
 
