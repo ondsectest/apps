@@ -40,7 +40,8 @@
   .who:focus-visible { outline: 3px solid #C9A6E4; outline-offset: 2px; }
   .avatar { position: relative; width: 112px; height: 112px; border-radius: 50%; background: linear-gradient(135deg, #3A2E48, #6B2F8F); color: #fff; display: grid; place-items: center; font-size: 38px; font-weight: 600; }
   .avatar .pen { position: absolute; right: 2px; bottom: 2px; width: 32px; height: 32px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.25); display: grid; place-items: center; }
-  .name { font-size: 22px; font-weight: 600; margin-top: 16px; }
+  /* Long names stay on one line and end with "..." instead of filling the card */
+  .name { display: block; max-width: 100%; font-size: 22px; font-weight: 600; margin-top: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .email { font-size: 16px; color: var(--muted); margin-top: 4px; }
   .plan { font-size: 16px; color: #4B4752; margin-top: 10px; }
   .stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 10px; font-size: 15px; font-weight: 500; margin-top: 12px; }
