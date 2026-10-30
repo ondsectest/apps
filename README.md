@@ -49,6 +49,10 @@ UX prototypes for Wispr Flow.
   is a redesign of the "Report an issue" screen that saves two taps. The issue type list opens on
   its own, radio buttons replace checkboxes, and choosing a type puts the cursor straight into the
   description. Plain HTML and JavaScript in one file, with a short demo video.
+- [Better UX: Explaining Settings Locked by an Admin](./Wispr%20Flow/Better%20UX%20Explaining%20Settings%20Locked%20by%20an%20Admin)
+  makes the admin-locked "Improve the model for everyone" toggle look locked rather than off, shows
+  a "Managed by your organization" badge, and explains the lock on tap or hover instead of
+  silently ignoring the tap. Plain HTML and JavaScript in one file.
 
 ## Licence
 
