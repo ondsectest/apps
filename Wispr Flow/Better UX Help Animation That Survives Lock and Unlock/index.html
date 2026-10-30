@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Better UX: Help Animation That Survives Lock and Unlock</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #1C1B1F; --muted: #6F6B75; --purple: #6B2F8F; --red: #FF3B30; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Figtree", system-ui, sans-serif; color: var(--ink); background: #E9E6EE;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 12px;
+  }
+  button { font-family: inherit; color: inherit; -webkit-appearance: none; appearance: none; }
+
+  /* Prototype controls (outside the phone) */
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
+  .seg { display: flex; background: #fff; border-radius: 22px; padding: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .seg button { border: 0; background: none; color: var(--ink); padding: 8px 14px; border-radius: 18px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .seg button.bug[aria-pressed="true"] { background: var(--red); }
+  .lockbtn { border: 0; background: var(--purple); color: #fff; padding: 11px 16px; border-radius: 22px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; gap: 8px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .lockbtn:disabled { opacity: .6; cursor: default; }
+
+  .phone {
+    width: 390px; height: 800px; background: #fff; border: 10px solid #111; border-radius: 44px;
+    box-shadow: 0 30px 60px rgba(0,0,0,.25); position: relative; overflow: hidden; display: flex; flex-direction: column; flex: none;
+  }
+  @media (max-width: 500px) {
+    body { padding: 8px 0 0; gap: 8px; justify-content: flex-start; background: #fff; }
+    .controls { padding: 0 8px; }
+    .seg button { padding: 7px 10px; font-size: 13px; }
+    .lockbtn { padding: 9px 12px; font-size: 13px; }
+    .phone { width: 100%; height: auto; flex: 1; min-height: 0; border: 0; border-radius: 0; box-shadow: none; border-top: 1px solid #EEE; }
+    .status, .navbar { display: none !important; }
+  }
+
+  .status { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 26px; font-size: 14px; font-weight: 500; color: #333; }
+  .bars { display: flex; gap: 2px; align-items: flex-end; }
+  .bars i { display: block; width: 3px; background: #333; border-radius: 1px; }
+
+  .screen { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 0 22px 18px; }
+  .top { display: flex; justify-content: flex-end; padding-top: 6px; }
+  .x { width: 44px; height: 44px; border: 0; background: none; border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
+  .x:hover { background: #F1EFF3; }
+  h1 { font-size: 21px; font-weight: 600; text-align: center; margin-top: 2px; }
+  .lead { text-align: center; color: var(--muted); font-size: 15px; line-height: 1.45; margin: 8px 12px 0; }
+
+  /* The help animation area */
+  .stage {
+    position: relative; margin: 26px 0 0; height: 300px; border-radius: 12px; overflow: hidden;
+    background: #F4F2F0; flex: none;
+  }
+  .reel { position: absolute; left: 0; right: 0; top: 0; padding: 14px 12px; animation: reel 7s ease-in-out infinite; }
+  .stage.paused .reel { animation-play-state: paused; }
+  .stage.restart .reel { animation: none; }
+  @keyframes reel {
+    0%, 12% { transform: translateY(40px); }
+    35%, 70% { transform: translateY(-18px); }
+    92%, 100% { transform: translateY(40px); }
+  }
+  .slider { height: 4px; background: #D9D5D0; border-radius: 2px; margin: 0 6px 18px; position: relative; }
+  .slider::after { content: ""; position: absolute; left: 50%; top: -6px; width: 16px; height: 16px; border-radius: 50%; background: #CFCBC6; }
+  .sec { background: #fff; border-radius: 6px; padding: 12px; margin-bottom: 10px; }
+  .sec-h { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 15px; }
+  .sec-h span:last-child { color: #555; font-weight: 400; letter-spacing: 6px; }
+  .app { display: flex; gap: 10px; align-items: center; margin-top: 10px; border: 1px solid #E6E3DF; border-radius: 6px; padding: 10px; animation: glow 7s ease-in-out infinite; }
+  .stage.paused .app { animation-play-state: paused; }
+  @keyframes glow { 0%, 38% { box-shadow: 0 0 0 0 rgba(107,47,143,0); } 50%, 62% { box-shadow: 0 0 0 3px rgba(107,47,143,.35); } 75%, 100% { box-shadow: 0 0 0 0 rgba(107,47,143,0); } }
+  .logo { width: 34px; height: 34px; border-radius: 6px; background: #1C1B1F; display: grid; place-items: center; flex: none; }
+  .app b { font-size: 13px; display: block; }
+  .app small { font-size: 11px; color: var(--muted); }
+  .app p { font-size: 11px; color: #444; margin-top: 6px; line-height: 1.35; }
+  .lic { font-weight: 600; font-size: 15px; }
+  .tabs { display: flex; justify-content: space-around; font-size: 10px; color: #666; padding-top: 6px; }
+  .tabs i { display: block; width: 16px; height: 12px; background: #C9C5C0; border-radius: 3px; margin: 0 auto 3px; }
+
+  /* Bug: the area goes black */
+  .black { position: absolute; inset: 0; background: #000; display: none; }
+  .stage.is-black .black { display: block; }
+  .bugmark { position: absolute; inset: 0; border: 4px solid var(--red); border-radius: 12px; display: none; pointer-events: none; }
+  .stage.is-black .bugmark { display: block; }
+  @keyframes pulse { 50% { border-color: rgba(255,59,48,.45); } }
+  .bugtag { position: absolute; top: 10px; left: 10px; background: var(--red); color: #fff; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 5px; }
+  .bugtext { position: absolute; left: 16px; right: 16px; bottom: 16px; text-align: center; color: #fff; }
+  .bugtext b { display: block; font-size: 20px; }
+  .bugtext span { display: block; color: #FFD65A; font-size: 13.5px; margin-top: 4px; line-height: 1.4; }
+  .bugtext em { display: block; font-style: normal; color: #BEBEC6; font-size: 12px; margin-top: 6px; }
+  .bugsvg { position: absolute; left: 50%; top: 40px; width: 90px; margin-left: -45px; }
+  @keyframes wiggle { from { transform: rotate(-8deg) translateX(-10px); } to { transform: rotate(8deg) translateX(10px); } }
+
+  /* Fix: a calm placeholder while the animation restarts, never black */
+  .resume { position: absolute; inset: 0; display: none; align-items: flex-end; justify-content: center; padding-bottom: 12px; pointer-events: none; }
+  .stage.is-resuming .resume { display: flex; }
+  .stage.is-resuming .reel { filter: saturate(.6); }
+  .resume span { background: rgba(28,27,31,.82); color: #fff; font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 14px; display: flex; gap: 6px; align-items: center; }
+  .fixtag { position: absolute; top: 10px; left: 10px; background: #1E8E3E; color: #fff; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 5px; display: none; }
+  .stage.show-fixtag .fixtag { display: block; }
+
+  .foot { margin-top: auto; text-align: center; color: var(--muted); font-size: 14.5px; line-height: 1.45; padding: 0 10px; }
+  .cta { margin-top: 14px; height: 52px; border: 0; border-radius: 10px; background: #1C1B1F; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; }
+
+  /* Simulated lock screen */
+  .lock {
+    position: absolute; inset: 0; z-index: 50; display: none; flex-direction: column; align-items: center; padding-top: 110px; color: #fff;
+    background: radial-gradient(circle at 30% 20%, #4B3B6B, #17141F 70%);
+  }
+  .lock.show { display: flex; animation: fadein .2s ease-out; }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  .lock .date { font-size: 18px; opacity: .9; }
+  .lock .time { font-size: 86px; font-weight: 300; line-height: 1; margin-top: 6px; }
+  .lock .hint { margin-top: auto; margin-bottom: 70px; font-size: 14px; opacity: .8; }
+
+  .navbar { height: 44px; flex: none; display: flex; justify-content: space-around; align-items: center; background: #E7E7E9; }
+
+  .toast {
+    position: absolute; left: 14px; right: 14px; bottom: 60px; z-index: 60; background: #2B2930; color: #fff;
+    padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.4; opacity: 0; transform: translateY(10px); transition: .2s; pointer-events: none;
+  }
+  @media (max-width: 500px) { .toast { bottom: 16px; } }
+  .toast.show { opacity: 1; transform: none; }
+  .toast b { display: block; }
+  .settings { flex: 1; display: flex; flex-direction: column; min-height: 0; background: #F4F4F4; }
+  .settings[hidden] { display: none; }
+  .s-bar { height: 56px; display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; padding: 0 8px; flex: none; }
+  .s-bar h2 { text-align: center; font-size: 20px; font-weight: 600; }
+  .s-list { flex: 1; overflow-y: auto; padding: 6px 14px 20px; }
+  .s-row { width: 100%; border: 0; background: #fff; border-radius: 16px; margin-bottom: 10px; padding: 16px 18px; display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer; }
+  .s-row span { flex: 1; min-width: 0; }
+  .s-row b { display: block; font-size: 16px; font-weight: 600; }
+  .s-row small { display: block; font-size: 13.5px; color: var(--muted); margin-top: 3px; line-height: 1.35; }
+  .s-row i { font-style: normal; font-size: 26px; line-height: 1; }
+  .s-row.live { box-shadow: inset 0 0 0 2px rgba(107,47,143,.35); }
+  .s-sec { font-size: 12.5px; font-weight: 600; letter-spacing: .04em; color: var(--muted); margin: 16px 6px 8px; }
+  /* the quick flash on close: the real animation shows for a split second */
+  .stage.flash .black, .stage.flash .bugmark { display: none !important; }
+</style>
+</head>
+<body>
+  <div class="controls" role="group" aria-label="Prototype controls">
+    <div class="seg" role="group" aria-label="Behaviour">
+      <button class="bug" id="m-bug" aria-pressed="true">Current (bug)</button>
+      <button id="m-fix" aria-pressed="false">Proposed fix</button>
+    </div>
+    <button class="lockbtn" id="lockbtn">
+      <svg width="14" height="16" viewBox="0 0 12 14" fill="#fff"><path d="M2 6V4.5a4 4 0 0 1 8 0V6h.5A1.5 1.5 0 0 1 12 7.5v5A1.5 1.5 0 0 1 10.5 14h-9A1.5 1.5 0 0 1 0 12.5v-5A1.5 1.5 0 0 1 1.5 6H2zm2 0h4V4.5a2 2 0 0 0-4 0V6z"/></svg>
+      Lock and unlock
+    </button>
+  </div>
+
+  <div class="phone">
+    <div class="status"><span id="clock">11:59</span>
+      <span class="bars"><i style="height:4px"></i><i style="height:7px"></i><i style="height:10px"></i><i style="height:13px"></i></span></div>
+
+    <div class="screen" id="scr-li">
+      <div class="top"><button class="x" id="close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button></div>
+      <h1>Add Wispr Flow to your LinkedIn profile</h1>
+      <p class="lead">Let your network see the tools you use — takes less than a minute.</p>
+
+      <div class="stage" id="stage" aria-label="Help animation">
+        <div class="reel">
+          <div class="slider"></div>
+          <div class="sec">
+            <div class="sec-h"><span>Connected apps</span><span>+ ✎</span></div>
+            <div class="app">
+              <span class="logo"><svg width="20" height="16" viewBox="0 0 20 16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M2 4v8M6 1v14M10 5v6M14 2v12M18 4v8"/></svg></span>
+              <span><b>Wispr Flow</b><small>Machine Learning Software</small>
+                <p>Ranked in the top 10% of users on Wispr Flow</p></span>
+            </div>
+          </div>
+          <div class="sec"><div class="sec-h"><span class="lic">Licenses &amp; certifications</span><span>+ ✎</span></div></div>
+          <div class="tabs"><span><i></i>Home</span><span><i></i>Video</span><span><i></i>My Network</span><span><i></i>Jobs</span><span><i></i>More</span></div>
+        </div>
+
+        <div class="black"></div>
+        <div class="bugmark">
+          <span class="bugtag">BUG</span>
+          <svg class="bugsvg" viewBox="0 0 120 120" aria-hidden="true">
+            <g stroke="#FFD65A" stroke-width="5" stroke-linecap="round" fill="none">
+              <path d="M38 52 L16 40 L8 30"/><path d="M36 68 L12 68 L4 76"/><path d="M40 84 L20 96 L14 108"/>
+              <path d="M82 52 L104 40 L112 30"/><path d="M84 68 L108 68 L116 76"/><path d="M80 84 L100 96 L106 108"/>
+              <path d="M54 26 L44 6"/><path d="M66 26 L76 6"/>
+            </g>
+            <circle cx="44" cy="6" r="5" fill="#FFD65A"/><circle cx="76" cy="6" r="5" fill="#FFD65A"/>
+            <ellipse cx="60" cy="74" rx="30" ry="34" fill="#E53935" stroke="#fff" stroke-width="3"/>
+            <path d="M60 42 V106" stroke="#7A1414" stroke-width="3"/>
+            <circle cx="47" cy="66" r="6" fill="#3C0A0A"/><circle cx="73" cy="66" r="6" fill="#3C0A0A"/>
+            <circle cx="49" cy="88" r="5" fill="#3C0A0A"/><circle cx="71" cy="88" r="5" fill="#3C0A0A"/>
+            <circle cx="60" cy="34" r="16" fill="#37373E" stroke="#fff" stroke-width="3"/>
+            <circle cx="53" cy="31" r="5" fill="#fff"/><circle cx="67" cy="31" r="5" fill="#fff"/>
+            <circle cx="53" cy="33" r="2.2" fill="#111"/><circle cx="67" cy="33" r="2.2" fill="#111"/>
+          </svg>
+          <div class="bugtext"><b>Here is the bug</b><span>The help animation goes completely dark after locking and unlocking the phone.</span><em>Seen on a Vivo 60e phone, Android</em></div>
+        </div>
+
+        <div class="resume" aria-hidden="true"><span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg>
+          Restarting the animation</span></div>
+        <span class="fixtag">FIXED</span>
+      </div>
+
+      <p class="foot">Wispr Flow appears under Connected apps on LinkedIn. You can remove it anytime.</p>
+      <button class="cta proto" data-name="Connect LinkedIn">Connect LinkedIn</button>
+    </div>
+
+    <div class="settings" id="scr-settings" hidden>
+      <div class="s-bar"><button class="x proto" data-name="Back" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button><h2>Settings</h2><span></span></div>
+      <div class="s-list">
+        <button class="s-row proto" data-name="Languages"><span><b>Languages</b><small>Hindi (हिन्दी) · Pashto (پښتو) · Portuguese (Português) · Croatian (Hrvatski) · Haitian…</small></span><i>›</i></button>
+        <button class="s-row proto" data-name="Flow Bubble Size"><span><b>Flow Bubble Size</b></span><i>›</i></button>
+        <button class="s-row proto" data-name="Flow Bubble Opacity"><span><b>Flow Bubble Opacity</b></span><i>›</i></button>
+        <button class="s-row live" id="open-li"><span><b>Add Wispr Flow to LinkedIn</b><small>Showcase Wispr Flow under Connected apps on your LinkedIn profile</small></span><i>›</i></button>
+        <div class="s-sec">DATA &amp; PRIVACY</div>
+        <button class="s-row proto" data-name="Local data storage"><span><b>Local data storage</b><small>Keep stored</small></span><i>›</i></button>
+      </div>
+    </div>
+
+    <div class="lock" id="lock" aria-hidden="true">
+      <div class="date" id="lockdate">Fri, Oct 30</div>
+      <div class="time" id="locktime">11:59</div>
+      <div class="hint">Unlocking…</div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <div class="navbar" aria-hidden="true">
+      <svg width="22" height="16" viewBox="0 0 22 16" stroke="#777" stroke-width="2"><path d="M2 2h18M2 8h18M2 14h18"/></svg>
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#777" stroke-width="2"><circle cx="11" cy="11" r="9"/></svg>
+      <svg width="14" height="22" viewBox="0 0 14 22" fill="none" stroke="#777" stroke-width="2"><path d="M12 2L3 11l9 9"/></svg>
+    </div>
+  </div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const stage = $('stage'), lock = $('lock'), lockbtn = $('lockbtn');
+  let mode = 'bug';
+  let timers = [];
+  const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+  const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
+
+  function toast(html, ms) {
+    const t = $('toast'); t.innerHTML = html; t.classList.add('show');
+    clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), ms || 3500);
+  }
+
+  function resetStage() {
+    clearTimers();
+    stage.className = 'stage';
+  }
+
+  function setMode(m) {
+    mode = m;
+    $('m-bug').setAttribute('aria-pressed', m === 'bug');
+    $('m-fix').setAttribute('aria-pressed', m === 'fix');
+    resetStage();
+    toast(m === 'bug'
+      ? '<b>Current behaviour</b>Tap Lock and unlock to see the help animation go dark.'
+      : '<b>Proposed fix</b>Tap Lock and unlock. The animation restarts instead of going dark.');
+  }
+  $('m-bug').addEventListener('click', () => setMode('bug'));
+  $('m-fix').addEventListener('click', () => setMode('fix'));
+
+  // What happens when the screen comes back after a lock
+  function onResume() {
+    resetStage();
+    if (mode === 'bug') {
+      // As on the phone: the animation surface goes black and stays black until the screen is closed
+      stage.classList.add('is-black', 'paused');
+    } else {
+      // Fix: keep the last frame visible, restart the animation from the start, never show black
+      stage.classList.add('is-resuming', 'restart');
+      later(() => { stage.classList.remove('restart'); }, 60);
+      later(() => { stage.classList.remove('is-resuming'); stage.classList.add('show-fixtag'); }, 700);
+      later(() => { stage.classList.remove('show-fixtag'); }, 3200);
+    }
+  }
+  function onPause() { if (!settingsOpen) { resetStage(); stage.classList.add('paused'); } }
+
+  // Close: in the bug, the hidden animation flashes for a split second before the screen closes
+  let settingsOpen = false;
+  function showSettings() {
+    settingsOpen = true;
+    $('scr-li').hidden = true; $('scr-li').style.display = 'none';
+    $('scr-settings').hidden = false;
+  }
+  $('close').addEventListener('click', () => {
+    if (stage.classList.contains('is-black')) {
+      stage.classList.remove('paused');
+      stage.classList.add('flash');
+      setTimeout(() => {
+        showSettings();
+        toast('<b>Closed</b>The animation flashed briefly before closing, as on the Vivo 60e.', 4000);
+      }, 700);   // long enough to clearly see it appear and disappear
+    } else {
+      showSettings();
+    }
+  });
+  $('open-li').addEventListener('click', () => {
+    settingsOpen = false;
+    resetStage();
+    $('scr-settings').hidden = true;
+    $('scr-li').hidden = false; $('scr-li').style.display = '';
+  });
+
+  // Simulated lock and unlock
+  lockbtn.addEventListener('click', () => {
+    if (settingsOpen) { toast('Open Add Wispr Flow to LinkedIn first, then lock and unlock.'); return; }
+    lockbtn.disabled = true;
+    onPause();
+    lock.classList.add('show');
+    setTimeout(() => {
+      lock.classList.remove('show');
+      onResume();
+      lockbtn.disabled = false;
+    }, 1600);
+  });
+
+  // Real lock and unlock (or switching apps) while this page is open does the same
+  document.addEventListener('visibilitychange', () => {
+    if (settingsOpen) return;
+    if (document.hidden) onPause(); else onResume();
+  });
+
+  document.querySelectorAll('.proto').forEach(el => el.addEventListener('click', () =>
+    toast(`This is just a prototype of the help animation, so ${el.dataset.name} is disabled.`)));
+
+  function tick() {
+    const d = new Date(), hm = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+    $('clock').textContent = hm; $('locktime').textContent = hm;
+    $('lockdate').textContent = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  tick(); setInterval(tick, 30000);
+})();
+</script>
+</body>
+</html>
