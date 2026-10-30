@@ -57,7 +57,8 @@
   .hint.show { display: block; }
   .btn { height: 60px; border-radius: 12px; border: 2px solid var(--border); font-size: 19px; font-weight: 600; cursor: pointer; background: #fff; }
   .btn.save { background: #EADCFB; }
-  .btn.save[aria-disabled="true"] { background: #F4F1F7; color: #A9A4AF; border-color: #CFCBD4; cursor: not-allowed; }
+  /* Same rule as Send in the app: the button keeps its look; only the text turns grey while disabled */
+  .btn.save[aria-disabled="true"] { color: #8A8590; cursor: not-allowed; }
 
   .navbar { height: 44px; flex: none; display: flex; justify-content: space-around; align-items: center; }
 

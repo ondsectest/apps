@@ -234,8 +234,9 @@
   }
   .btn-attach { flex: 0 0 36%; background: #fff; color: var(--ink); }
   .btn-attach:active { background: #F3F3F3; }
-  .btn-send { flex: 1; background: var(--purple); color: #fff; border-color: var(--purple); }
-  .btn-send:disabled, .btn-send[aria-disabled="true"] { background: var(--purple-soft); color: var(--muted); border-color: var(--ink); cursor: not-allowed; }
+  /* Same as the app: Send keeps its look; only the text turns from grey (disabled) to dark (enabled) */
+  .btn-send { flex: 1; background: #F7EBFF; color: #1C1B1F; border-color: #25212F; }
+  .btn-send:disabled, .btn-send[aria-disabled="true"] { background: #F7EBFF; color: #8A8590; border-color: #25212F; cursor: not-allowed; }
 
   .navbar { height: 48px; flex: none; display: flex; justify-content: space-around; align-items: center; color: #888; }
 
