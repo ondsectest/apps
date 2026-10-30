@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
 <title>Keyboard Ready in Share Feedback</title>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --purple: #6B2F8F;
@@ -201,7 +201,7 @@
   .kb-row { display: flex; gap: 5px; margin: 0 0 7px; justify-content: center; }
   .key {
     flex: 1; height: 42px; border: 0; border-radius: 7px; background: #3B3D43; color: #F1F1F3;
-    font-family: "Figtree", sans-serif; font-size: 20px; cursor: pointer; padding: 0;
+    font-family: "Roboto", system-ui, sans-serif; font-size: 20px; cursor: pointer; padding: 0;
     display: grid; place-items: center;
   }
   .key:active { background: #5A5D66; }
@@ -235,7 +235,7 @@
   .btn-attach { flex: 0 0 36%; background: #fff; color: var(--ink); }
   .btn-attach:active { background: #F3F3F3; }
   /* Same as the app: Send keeps its look; only the text turns from grey (disabled) to dark (enabled) */
-  .btn-send { flex: 1; background: #F7EBFF; color: #1C1B1F; border-color: #25212F; }
+  .btn-send { flex: 1; background: #F7EBFF; color: #1C1B1F; border-color: #25212F; font-family: "Roboto", system-ui, sans-serif; font-weight: 500; }
   .btn-send:disabled, .btn-send[aria-disabled="true"] { background: #F7EBFF; color: #8A8590; border-color: #25212F; cursor: not-allowed; }
 
   .navbar { height: 48px; flex: none; display: flex; justify-content: space-around; align-items: center; color: #888; }
