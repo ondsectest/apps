@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<title>Add Snippet: Cursor Ready in the First Field</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #1C1B1F; --muted: #6F6B75; --bg: #EDEDF0; --purple: #6B2F8F; --pink: #E0569A; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: "Figtree", system-ui, sans-serif; color: var(--ink); background: #E9E6EE; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 12px; }
+  button, input, textarea { font-family: inherit; color: inherit; -webkit-appearance: none; appearance: none; }
+
+  .controls { display: flex; justify-content: center; flex: none; }
+  .bugbtn { border: 0; background: #B3261E; color: #fff; font-size: 14px; font-weight: 700; padding: 9px 18px; border-radius: 20px; cursor: pointer; display: flex; gap: 8px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+
+  .phone { width: 390px; height: 844px; background: var(--bg); border: 10px solid #111; border-radius: 44px; box-shadow: 0 30px 60px rgba(0,0,0,.25); position: relative; overflow: hidden; display: flex; flex-direction: column; flex: none; }
+  @media (max-width: 500px) {
+    body { padding: 8px 0 0; gap: 8px; justify-content: flex-start; height: 100dvh; }
+    .phone { width: 100%; height: auto; flex: 1; min-height: 0; border: 0; border-radius: 0; box-shadow: none; }
+    .status, .navbar { display: none !important; }
+  }
+  .status { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 26px; font-size: 14px; font-weight: 500; color: #333; }
+  .bars { display: flex; gap: 2px; align-items: flex-end; }
+  .bars i { display: block; width: 3px; background: #333; border-radius: 1px; }
+
+  .top { height: 58px; flex: none; display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; padding: 0 10px; }
+  .brand { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 26px; font-weight: 800; letter-spacing: -.5px; }
+  .icon-btn { width: 44px; height: 44px; border: 0; background: none; border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
+
+  .page { flex: 1; overflow-y: auto; padding: 8px 16px 90px; position: relative; display: none; }
+  .page.active { display: block; }
+  .search { display: flex; align-items: center; gap: 14px; height: 52px; border: 2px solid #CFC9D6; border-radius: 10px; background: #fff; padding: 0 14px; color: #B9B4C0; font-size: 18px; margin: 10px 0 22px; }
+  .item { background: #fff; border-radius: 22px; padding: 18px 20px; font-size: 19px; margin-bottom: 10px; }
+  .item small { display: block; font-size: 14px; color: var(--muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .empty { position: absolute; left: 16px; right: 16px; top: 50%; transform: translateY(-50%); text-align: center; color: #77737D; font-size: 17px; line-height: 1.4; pointer-events: none; }
+  .home-card { background: #fff; border-radius: 22px; padding: 20px; margin-top: 10px; }
+  .home-card h2 { font-size: 20px; font-weight: 700; }
+  .home-card p { color: var(--muted); font-size: 15px; margin-top: 6px; line-height: 1.45; }
+  .hint { margin-top: 14px; background: #FFF8DC; border: 2px solid #FFD95A; border-radius: 14px; padding: 10px 12px; font-size: 13.5px; line-height: 1.4; }
+
+  .fab { position: absolute; right: 18px; bottom: 96px; width: 56px; height: 56px; border-radius: 50%; border: 0; background: #1C1B1F; color: #fff; display: none; place-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,.3); z-index: 5; }
+  .fab.show { display: grid; }
+
+  .tabs { flex: none; display: flex; justify-content: space-around; padding: 8px 4px 10px; background: var(--bg); }
+  .tab { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 14px; color: #6F6B75; cursor: pointer; min-width: 80px; }
+  .tab .ic { width: 58px; height: 32px; border-radius: 16px; display: grid; place-items: center; }
+  .tab.active { color: var(--ink); }
+  .tab.active .ic { background: #DCDADF; }
+  .tab.off { color: #B5B1BA; cursor: not-allowed; }
+  .navbar { height: 44px; flex: none; display: flex; justify-content: space-around; align-items: center; background: #fff; }
+
+  /* Add snippet dialog, styled like the app */
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 40; display: none; }
+  .scrim.show { display: block; }
+  .dialog { position: absolute; left: 24px; right: 24px; top: 46px; z-index: 41; background: #fff; border-radius: 28px; padding: 26px 24px 16px; display: none; font-family: "Roboto", system-ui, sans-serif; }
+  .dialog.show { display: block; animation: pop .16s ease-out; }
+  @keyframes pop { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+  .dialog h3 { font-size: 22px; font-weight: 400; margin-bottom: 20px; }
+  .f1 { width: 100%; height: 56px; border: 0; border-bottom: 1.5px solid #8C8792; background: #E3E2E8; border-radius: 6px 6px 0 0; padding: 0 16px; font-family: "Roboto", sans-serif; font-size: 15px; }
+  .f2 { width: 100%; min-height: 56px; max-height: 170px; border: 0; border-bottom: 1.5px solid #8C8792; background: transparent; padding: 14px 16px; font-family: "Roboto", sans-serif; font-size: 15px; line-height: 1.5; resize: none; margin-top: 18px; overflow-y: auto; display: block; }
+  .f1:focus, .f2:focus { outline: none; border-bottom: 2.5px solid var(--purple); }
+  .f1::placeholder, .f2::placeholder { color: #8C8792; }
+  /* As in the app: after Add fails, BOTH fields turn pink, so it is unclear which one is too long */
+  .dialog.err .f1, .dialog.err .f2 { border-bottom-color: var(--pink); }
+  .dialog.err .f2:focus { border-bottom-color: var(--purple); }
+  .errmsg { color: var(--pink); font-size: 17px; line-height: 1.4; margin-top: 10px; display: none; }
+  .dialog.err .errmsg { display: block; }
+  .acts { display: flex; justify-content: flex-end; gap: 6px; margin-top: 22px; }
+  .tbtn { border: 0; background: none; font-family: "Roboto", sans-serif; font-size: 16px; font-weight: 500; padding: 10px 16px; border-radius: 20px; cursor: pointer; }
+  .tbtn.add { color: var(--purple); }
+  /* Add stays disabled (grey) until both fields have text, as in the app */
+  .tbtn.add[aria-disabled="true"] { color: #9A96A0; cursor: default; }
+  .tbtn.add[aria-disabled="true"]:hover { background: none; }
+  .tbtn:hover { background: rgba(0,0,0,.05); }
+
+  /* Bug details */
+  .bug-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 60; display: none; }
+  .bug-scrim.show { display: block; }
+  .bug { position: absolute; left: 0; right: 0; bottom: 0; z-index: 61; max-height: 90%; overflow-y: auto; background: #fff; border-radius: 20px 20px 0 0; padding: 16px 18px 18px; display: none; box-shadow: 0 -10px 30px rgba(0,0,0,.2); }
+  .bug.show { display: block; animation: up .2s ease-out; }
+  @keyframes up { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .bug h3 { font-size: 18px; font-weight: 700; padding-right: 40px; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .tag { font-size: 11.5px; font-weight: 700; border-radius: 10px; padding: 2px 9px; background: #EFEDF2; color: #49454F; }
+  .tag.red { background: #FBE3E1; color: #B3261E; }
+  .bug h4 { font-size: 14px; font-weight: 700; margin-top: 14px; }
+  .bug p, .bug li { font-size: 13.5px; line-height: 1.45; color: #3D3A42; }
+  .bug ol, .bug ul { margin: 6px 0 0 18px; }
+  .bug li + li { margin-top: 4px; }
+  .bug img { width: 100%; border-radius: 10px; border: 1px solid #E2DFE6; margin-top: 8px; display: block; }
+  .bug .x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #F1EFF3; cursor: pointer; display: grid; place-items: center; }
+  .bug .row { display: flex; gap: 8px; margin-top: 14px; }
+  .bug .row button { flex: 1; height: 44px; border-radius: 10px; border: 1.5px solid #1C1B1F; background: #fff; font-weight: 600; font-size: 14px; cursor: pointer; }
+
+  .toast { position: absolute; left: 14px; right: 14px; bottom: 120px; z-index: 70; background: #2B2930; color: #fff; padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.4; opacity: 0; transform: translateY(10px); transition: .2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: none; }
+
+  .modebtn { border: 2px solid transparent; font-size: 14px; font-weight: 700; padding: 8px 18px; border-radius: 20px; cursor: pointer; display: flex; gap: 8px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .modebtn.issue { background: #B3261E; color: #fff; }
+  .modebtn.impr { background: #1E7A46; color: #fff; }
+  .modebtn[aria-pressed="false"] { opacity: .55; box-shadow: none; }
+  .modebtn[aria-pressed="true"] { border-color: #1C1B1F; }
+  .controls { gap: 10px; }
+  .mode-banner { flex: none; text-align: center; font-size: 13px; font-weight: 700; padding: 6px 10px; color: #fff; }
+  .mode-banner.issue { background: #B3261E; }
+  .mode-banner.impr { background: #1E7A46; }
+  .tag.green { background: #DDF3E5; color: #1E7A46; }
+  .bug .row button.go { background: #1C1B1F; color: #fff; }
+  /* Pretend keyboard tray, only in the desktop phone frame. A real phone shows its own keyboard. */
+  .kb { position: absolute; left: 0; right: 0; bottom: 44px; height: 250px; background: #D7D9DF; z-index: 45; padding: 10px 4px 8px; display: none; flex-direction: column; gap: 9px; font-family: "Roboto", sans-serif; }
+  .kb.show { display: flex; animation: kbup .2s ease-out; }
+  @keyframes kbup { from { transform: translateY(100%); } to { transform: none; } }
+  .kb .r { display: flex; justify-content: center; gap: 5px; }
+  .kb .k { width: 32px; height: 44px; background: #fff; border-radius: 6px; display: grid; place-items: center; font-size: 19px; color: #1C1B1F; box-shadow: 0 1px 0 rgba(0,0,0,.25); }
+  .kb .k.w { width: 50px; font-size: 13px; background: #AEB3BD; }
+  .kb .k.sp { width: 180px; }
+  @media (max-width: 500px) { .kb { display: none !important; } }
+  @media (min-width: 501px) { .phone.kb-up .toast { bottom: 310px; } }
+</style>
+</head>
+<body>
+  <div class="controls">
+    <button class="modebtn issue" id="m-issue" aria-pressed="true" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M20 8h-2.8a6 6 0 0 0-1.8-2l1.6-1.6-1.4-1.4-2.2 2.2a6 6 0 0 0-2.8 0L8.4 3 7 4.4 8.6 6a6 6 0 0 0-1.8 2H4v2h2.1a6 6 0 0 0 0 2H4v2h2.8a6 6 0 0 0 10.4 0H20v-2h-2.1a6 6 0 0 0 0-2H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/></svg>
+      Issue</button>
+    <button class="modebtn impr" id="m-impr" aria-pressed="false" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
+      Improvement</button>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="status"><span id="clock">23:55</span>
+      <span class="bars"><i style="height:4px"></i><i style="height:7px"></i><i style="height:10px"></i><i style="height:13px"></i></span></div>
+
+    <div class="mode-banner issue" id="banner">Issue: how the app works today</div>
+    <div class="top">
+      <button class="icon-btn proto" data-name="Menu" aria-label="Menu"><svg width="22" height="18" viewBox="0 0 22 18" fill="#1C1B1F"><rect y="1" width="22" height="3.4" rx="1.7"/><rect y="7.3" width="22" height="3.4" rx="1.7"/><rect y="13.6" width="22" height="3.4" rx="1.7"/></svg></button>
+      <div class="brand"><svg width="30" height="30" viewBox="0 0 30 30" stroke="#1C1B1F" stroke-width="3" stroke-linecap="round"><path d="M3 5v20M9 10v10M15 7v16M21 11v8M27 4v22"/></svg>Wispr Flow</div>
+      <span></span>
+    </div>
+
+    <section class="page active" id="pg-home">
+      <div class="home-card"><h2>Home</h2><p>Your dictation history and stats appear here.</p>
+        <div class="hint">Tap <b>Snippets</b> at the bottom, then <b>+</b>. Use <b>Issue</b> and <b>Improvement</b> above to compare: today the cursor is not in the first field, and with the improvement it is, with the keyboard open and ready to type.</div>
+      </div>
+    </section>
+    <section class="page" id="pg-dictionary">
+      <div class="search"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B9B4C0" stroke-width="2"><circle cx="10.5" cy="10.5" r="7"/><path d="M16 16l5 5"/></svg>Search</div>
+      <div class="item">Wispr Flow</div>
+    </section>
+    <section class="page" id="pg-style"><div class="home-card"><h2>Style</h2><p>Not part of this prototype.</p></div></section>
+    <section class="page" id="pg-snippets">
+      <div class="search"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B9B4C0" stroke-width="2"><circle cx="10.5" cy="10.5" r="7"/><path d="M16 16l5 5"/></svg>Search</div>
+      <div id="snip-list"></div>
+      <p class="empty" id="snip-empty">Your Snippets show up here.</p>
+    </section>
+
+    <button class="fab" id="fab" aria-label="Add snippet"><svg width="22" height="22" viewBox="0 0 22 22" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M11 3v16M3 11h16"/></svg></button>
+
+    <nav class="tabs" aria-label="Main">
+      <button class="tab active" data-p="home"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M4 10l8-6 8 6v10h-5v-6H9v6H4z"/></svg></span>Home</button>
+      <button class="tab off" data-p="dictionary" aria-disabled="true" data-name="Dictionary"><span class="ic"><svg width="22" height="24" viewBox="0 0 22 24" fill="currentColor"><path d="M4 1h10l6 6v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm7 6v8a1.5 1.5 0 0 1-3 0V9H6.5v6a3 3 0 0 0 6 0V7z"/></svg></span>Dictionary</button>
+      <button class="tab off" data-p="style" aria-disabled="true" data-name="Style"><span class="ic"><svg width="26" height="22" viewBox="0 0 26 22" fill="currentColor"><path d="M1 2h12v3.5H9V20H5V5.5H1zM13 9h11v3h-3.5v8h-3.5v-8H13z"/></svg></span>Style</button>
+      <button class="tab" data-p="snippets"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="6" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M8.5 7.5L20 19M8.5 16.5L20 5"/></svg></span>Snippets</button>
+    </nav>
+
+    <div class="scrim" id="scrim"></div>
+    <div class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="d-title">
+      <h3 id="d-title">Add snippet</h3>
+      <input class="f1" id="f1" aria-label="Snippet" placeholder="Snippet" autocomplete="off">
+      <textarea class="f2" id="f2" aria-label="Expansion" placeholder="Expansion" rows="1"></textarea>
+      <div class="acts">
+        <button class="tbtn" id="cancel">Cancel</button>
+        <button class="tbtn add" id="add" aria-disabled="true">Add</button>
+      </div>
+    </div>
+
+    <div class="bug-scrim" id="bug-scrim"></div>
+    <section class="bug" id="sh-issue" role="dialog" aria-modal="true" aria-labelledby="t-issue">
+      <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      <h3 id="t-issue">Add snippet opens without the cursor in the first field</h3>
+      <div class="tags"><span class="tag red">Issue</span><span class="tag">Snippets</span><span class="tag">Vivo 60e, Android</span></div>
+      <h4>Steps to reproduce</h4>
+      <ol>
+        <li>From <b>Home</b>, tap <b>Snippets</b> at the bottom.</li>
+        <li>Tap <b>+</b> to add a new snippet.</li>
+      </ol>
+      <h4>What happens</h4>
+      <ul>
+        <li>The Add snippet dialog opens, but <b>no field has the cursor</b>.</li>
+        <li>The <b>keyboard does not open</b>.</li>
+        <li>The user has to tap the <b>Snippet</b> field before they can start typing.</li>
+      </ul>
+      <h4>Why it matters</h4>
+      <ul>
+        <li>The dialog is a single-task form: typing a snippet is the only thing to do there.</li>
+        <li>An extra tap every time a snippet is added adds friction and slows the user down.</li>
+      </ul>
+      <div class="row"><button class="go" data-try>Try the issue</button></div>
+      <div class="row"><button data-close>Done</button></div>
+    </section>
+    <section class="bug" id="sh-impr" role="dialog" aria-modal="true" aria-labelledby="t-impr">
+      <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      <h3 id="t-impr">Cursor ready in the Snippet field, keyboard open</h3>
+      <div class="tags"><span class="tag green">Improvement</span><span class="tag">Snippets</span><span class="tag">Vivo 60e, Android</span></div>
+      <h4>What changes</h4>
+      <ul>
+        <li>When <b>+</b> is tapped, the cursor is placed in the first field, <b>Snippet</b>.</li>
+        <li>The <b>keyboard tray opens automatically</b>, so the user can start typing straight away.</li>
+        <li>Everything else stays the same: the placeholders, Cancel, and Add staying disabled until both fields have text.</li>
+      </ul>
+      <h4>Why it is better</h4>
+      <ul>
+        <li>One tap fewer every time a snippet is added.</li>
+        <li>The form feels ready, because there is nothing else to do on it.</li>
+        <li>Works well with dictation too: the user can start speaking right away.</li>
+      </ul>
+      <div class="row"><button class="go" data-try>Try the improvement</button></div>
+      <div class="row"><button data-close>Done</button></div>
+    </section>
+
+    <div class="kb" id="kb" aria-hidden="true">
+      <div class="r"><span class="k">q</span><span class="k">w</span><span class="k">e</span><span class="k">r</span><span class="k">t</span><span class="k">y</span><span class="k">u</span><span class="k">i</span><span class="k">o</span><span class="k">p</span></div>
+      <div class="r"><span class="k">a</span><span class="k">s</span><span class="k">d</span><span class="k">f</span><span class="k">g</span><span class="k">h</span><span class="k">j</span><span class="k">k</span><span class="k">l</span></div>
+      <div class="r"><span class="k w">&#8679;</span><span class="k">z</span><span class="k">x</span><span class="k">c</span><span class="k">v</span><span class="k">b</span><span class="k">n</span><span class="k">m</span><span class="k w">&#9003;</span></div>
+      <div class="r"><span class="k w">?123</span><span class="k">,</span><span class="k sp"></span><span class="k">.</span><span class="k w">&#8629;</span></div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <div class="navbar" aria-hidden="true">
+      <svg width="22" height="16" viewBox="0 0 22 16" stroke="#888" stroke-width="2"><path d="M2 2h18M2 8h18M2 14h18"/></svg>
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="9"/></svg>
+      <svg width="14" height="22" viewBox="0 0 14 22" fill="none" stroke="#888" stroke-width="2"><path d="M12 2L3 11l9 9"/></svg>
+    </div>
+  </div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const snippets = [];
+  let mode = 'issue';
+
+  function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 3000); }
+
+  // Tabs
+  function showPage(p) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.p === p));
+    document.querySelectorAll('.page').forEach(pg => pg.classList.toggle('active', pg.id === 'pg-' + p));
+    $('fab').classList.toggle('show', p === 'snippets' || p === 'dictionary');
+    $('fab').dataset.p = p;
+  }
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+    if (t.classList.contains('off')) { toast(`Intentionally disabled: ${t.dataset.name} is not part of this Snippets prototype.`); return; }
+    showPage(t.dataset.p);
+  }));
+
+  // Issue / Improvement
+  function setMode(m) {
+    mode = m;
+    $('m-issue').setAttribute('aria-pressed', m === 'issue');
+    $('m-impr').setAttribute('aria-pressed', m === 'impr');
+    const b = $('banner');
+    b.className = 'mode-banner ' + m;
+    b.textContent = m === 'issue' ? 'Issue: how the app works today' : 'Improvement: cursor ready, keyboard open';
+  }
+  let openSheet = null;
+  function showSheet(id) {
+    closeAdd(); closeSheet(); $('toast').classList.remove('show');
+    openSheet = $(id); openSheet.classList.add('show'); $('bug-scrim').classList.add('show');
+    openSheet.scrollTop = 0; openSheet.querySelector('.x').focus({ preventScroll: true });
+  }
+  function closeSheet() { if (openSheet) openSheet.classList.remove('show'); $('bug-scrim').classList.remove('show'); openSheet = null; }
+  $('m-issue').addEventListener('click', () => { setMode('issue'); showSheet('sh-issue'); });
+  $('m-impr').addEventListener('click', () => { setMode('impr'); showSheet('sh-impr'); });
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheet));
+  $('bug-scrim').addEventListener('click', closeSheet);
+  document.querySelectorAll('[data-try]').forEach(b => b.addEventListener('click', () => {
+    closeSheet(); showPage('snippets');
+    toast(mode === 'issue' ? 'Now tap + and notice: no cursor, no keyboard.' : 'Now tap + and start typing right away.');
+  }));
+
+  // Add snippet dialog
+  const dialog = $('dialog'), f1 = $('f1'), f2 = $('f2'), add = $('add'), kb = $('kb');
+  const bothFilled = () => f1.value.trim() !== '' && f2.value.trim() !== '';
+  function updateAdd() { add.setAttribute('aria-disabled', !bothFilled()); }
+  [f1, f2].forEach(f => f.addEventListener('input', updateAdd));
+  // Tapping Add while it is disabled does nothing and keeps the cursor and keyboard in place
+  ['mousedown', 'pointerdown'].forEach(ev => add.addEventListener(ev, e => { if (!bothFilled()) e.preventDefault(); }));
+  function grow() { f2.style.height = 'auto'; f2.style.height = Math.min(f2.scrollHeight + 2, 170) + 'px'; }
+  f2.addEventListener('input', grow);
+
+  // Pretend keyboard (desktop frame only) follows focus in the two fields, like a real keyboard
+  function syncKb() { const a = document.activeElement; const on = dialog.classList.contains('show') && (a === f1 || a === f2); kb.classList.toggle('show', on); $('phone').classList.toggle('kb-up', on); }
+  [f1, f2].forEach(f => { f.addEventListener('focus', syncKb); f.addEventListener('blur', () => setTimeout(syncKb, 0)); });
+
+  function openAdd() {
+    f1.value = ''; f2.value = '';
+    dialog.classList.add('show'); $('scrim').classList.add('show');
+    grow(); updateAdd();
+    if (mode === 'impr') {
+      // Improvement: cursor in the first field and the keyboard opens straight away
+      f1.focus({ preventScroll: true });
+    } else {
+      // Issue (as in the app today): nothing has focus, so there is no cursor and no keyboard
+      if (document.activeElement) document.activeElement.blur();
+    }
+    syncKb();
+  }
+  function closeAdd() { dialog.classList.remove('show'); $('scrim').classList.remove('show'); if (document.activeElement) document.activeElement.blur(); syncKb(); }
+  $('fab').addEventListener('click', () => {
+    if ($('fab').dataset.p !== 'snippets') { toast('This is just a prototype of Snippets, so adding dictionary words is disabled.'); return; }
+    openAdd();
+  });
+  $('cancel').addEventListener('click', closeAdd);
+  $('scrim').addEventListener('click', closeAdd);
+  add.addEventListener('click', () => {
+    const a = f1.value.trim(), b = f2.value.trim();
+    if (!a || !b) return;   // Add is disabled until both fields have text
+    snippets.push({ a, b }); renderList(); closeAdd();
+    toast('Snippet added. This is a prototype only, so nothing was saved.');
+  });
+
+  function renderList() {
+    $('snip-list').innerHTML = '';
+    snippets.forEach(s => { const el = document.createElement('div'); el.className = 'item'; el.textContent = s.a; const sm = document.createElement('small'); sm.textContent = s.b; el.appendChild(sm); $('snip-list').appendChild(el); });
+    $('snip-empty').style.display = snippets.length ? 'none' : '';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (openSheet) closeSheet(); else if (dialog.classList.contains('show')) closeAdd();
+  });
+  document.querySelectorAll('.proto').forEach(el => el.addEventListener('click', () => toast(`This is just a prototype of Snippets, so ${el.dataset.name} is disabled.`)));
+  function tick() { const d = new Date(); $('clock').textContent = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  tick(); setInterval(tick, 30000);
+})();
+</script>
+</body>
+</html>

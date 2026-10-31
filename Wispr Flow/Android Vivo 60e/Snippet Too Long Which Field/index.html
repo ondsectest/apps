@@ -34,7 +34,7 @@
   .search { display: flex; align-items: center; gap: 14px; height: 52px; border: 2px solid #CFC9D6; border-radius: 10px; background: #fff; padding: 0 14px; color: #B9B4C0; font-size: 18px; margin: 10px 0 22px; }
   .item { background: #fff; border-radius: 22px; padding: 18px 20px; font-size: 19px; margin-bottom: 10px; }
   .item small { display: block; font-size: 14px; color: var(--muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .empty { text-align: center; color: var(--muted); font-size: 15px; margin-top: 40px; line-height: 1.5; }
+  .empty { position: absolute; left: 16px; right: 16px; top: 50%; transform: translateY(-50%); text-align: center; color: #77737D; font-size: 17px; line-height: 1.4; pointer-events: none; }
   .home-card { background: #fff; border-radius: 22px; padding: 20px; margin-top: 10px; }
   .home-card h2 { font-size: 20px; font-weight: 700; }
   .home-card p { color: var(--muted); font-size: 15px; margin-top: 6px; line-height: 1.45; }
@@ -126,7 +126,7 @@
     <section class="page" id="pg-snippets">
       <div class="search"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B9B4C0" stroke-width="2"><circle cx="10.5" cy="10.5" r="7"/><path d="M16 16l5 5"/></svg>Search</div>
       <div id="snip-list"></div>
-      <p class="empty" id="snip-empty">No snippets yet.<br>Tap + to add one.</p>
+      <p class="empty" id="snip-empty">Your Snippets show up here.</p>
     </section>
 
     <button class="fab" id="fab" aria-label="Add snippet"><svg width="22" height="22" viewBox="0 0 22 22" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M11 3v16M3 11h16"/></svg></button>
