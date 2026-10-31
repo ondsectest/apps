@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Play Store Listing: Terms of Service Link Opens a 404</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { font-family: "Figtree", system-ui, sans-serif; color: #1C1B1F; background: #E9E6EE; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 12px; }
+  button { font-family: inherit; color: inherit; }
+
+  .controls { display: flex; justify-content: center; gap: 10px; flex: none; }
+  .modebtn { border: 2px solid transparent; font-size: 14px; font-weight: 700; padding: 8px 18px; border-radius: 20px; cursor: pointer; display: flex; gap: 8px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.2); color: #fff; }
+  .modebtn.issue { background: #B3261E; }
+  .modebtn.impr { background: #1E7A46; }
+  .modebtn[aria-pressed="false"] { opacity: .55; box-shadow: none; }
+  .modebtn[aria-pressed="true"] { border-color: #1C1B1F; }
+
+  .phone { width: 390px; height: 844px; background: #fff; border: 10px solid #111; border-radius: 44px; box-shadow: 0 30px 60px rgba(0,0,0,.25); position: relative; overflow: hidden; display: flex; flex-direction: column; flex: none; }
+  @media (max-width: 500px) {
+    body { padding: 8px 0 0; gap: 8px; justify-content: flex-start; height: 100dvh; }
+    .phone { width: 100%; height: auto; flex: 1; min-height: 0; border: 0; border-radius: 0; box-shadow: none; }
+    .status, .navbar { display: none !important; }
+  }
+  .status { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 26px; font: 500 14px "Roboto", sans-serif; color: #333; }
+  .bars { display: flex; gap: 2px; align-items: flex-end; }
+  .bars i { display: block; width: 3px; background: #333; border-radius: 1px; }
+  .mode-banner { flex: none; text-align: center; font-size: 13px; font-weight: 700; padding: 6px 10px; color: #fff; }
+  .mode-banner.issue { background: #B3261E; }
+  .mode-banner.impr { background: #1E7A46; }
+
+  /* Google Play Store app, Wispr Flow "About this app" (Details) page, recreated for the bug report */
+  .store { flex: 1; min-height: 0; display: flex; flex-direction: column; font-family: "Roboto", system-ui, sans-serif; position: relative; }
+  .shead { flex: none; display: flex; align-items: center; gap: 14px; padding: 10px 14px 10px 8px; border-bottom: 1px solid #D5D3D8; }
+  .icon-btn { width: 44px; height: 44px; border: 0; background: none; border-radius: 50%; display: grid; place-items: center; cursor: pointer; flex: none; }
+  .appicon { width: 34px; height: 34px; border-radius: 9px; background: #1C1B1F; display: grid; place-items: center; flex: none; }
+  .shead .t { font-size: 17px; font-weight: 500; line-height: 1.2; }
+  .shead .s { font-size: 13px; color: #5F5C63; margin-top: 2px; }
+  .sbody { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 24px 24px; font-size: 15.5px; line-height: 1.55; color: #2A2830; }
+  .sbody p + p { margin-top: 16px; }
+  .ghost { display: block; height: 11px; border-radius: 6px; background: #EDEBF0; margin: 9px 0; }
+  .ghost.s { width: 72%; }
+  .fold { font-size: 12px; color: #8C8792; font-style: italic; margin-bottom: 10px; }
+  .sbody a.tos { color: #1C1B1F; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; border-radius: 4px; }
+  .sbody a.tos:focus-visible { outline: 2px solid #6B2F8F; outline-offset: 2px; }
+  .mark { position: relative; }
+  .mark .dot { background: #FBE3E1; color: #B3261E; border-radius: 3px; padding: 0 2px; font-weight: 700; }
+  .callout { margin-top: 10px; font-family: "Figtree", sans-serif; font-size: 13px; line-height: 1.4; border-radius: 10px; padding: 9px 12px; color: #fff; position: relative; }
+  .callout.red { background: #B3261E; }
+  .callout.green { background: #1E7A46; }
+  .callout::before { content: ""; position: absolute; top: -7px; left: 36px; border: 7px solid transparent; border-top: 0; }
+  .callout.red::before { border-bottom-color: #B3261E; }
+  .callout.green::before { border-bottom-color: #1E7A46; }
+  .sec { border-top: 1px solid #D5D3D8; margin: 22px -24px 0; padding: 20px 24px 0; }
+  .sec h3 { font-size: 19px; font-weight: 400; margin-bottom: 14px; }
+  .rate { display: flex; align-items: center; gap: 18px; }
+  .rate .box { width: 36px; height: 30px; border: 2.5px solid #1C1B1F; border-radius: 3px; font-weight: 700; font-size: 17px; display: grid; place-items: center; }
+  .rate .lm { color: #0B57D0; }
+  .kv { display: flex; justify-content: space-between; padding: 6px 0; }
+
+  /* In-app browser view after tapping the link */
+  .web { position: absolute; inset: 0; background: #fff; z-index: 20; display: none; flex-direction: column; font-family: "Roboto", system-ui, sans-serif; }
+  .web.show { display: flex; animation: up .2s ease-out; }
+  @keyframes up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .wbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #F1F0F3; border-bottom: 1px solid #DDDAE0; }
+  .url { flex: 1; min-width: 0; background: #fff; border-radius: 18px; padding: 8px 14px; font-size: 13.5px; color: #3D3A42; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .url .bad { background: #FBE3E1; color: #B3261E; font-weight: 700; border-radius: 3px; padding: 0 2px; }
+  .wpage { flex: 1; min-height: 0; overflow-y: auto; padding: 40px 26px; }
+  .e404 { text-align: center; padding-top: 70px; }
+  .e404 .n { font: 700 72px/1 "Figtree", sans-serif; color: #B3261E; letter-spacing: -2px; }
+  .e404 h2 { font: 700 22px "Figtree", sans-serif; margin-top: 10px; }
+  .e404 p { color: #5F5C63; margin-top: 8px; line-height: 1.5; font-size: 15px; }
+  .ok h2 { font: 700 26px "Figtree", sans-serif; }
+  .ok .ok-tag { display: inline-block; font: 700 12px "Figtree", sans-serif; background: #DDF3E5; color: #1E7A46; border-radius: 10px; padding: 3px 10px; margin-bottom: 14px; }
+  .ok p { color: #3D3A42; margin-top: 10px; line-height: 1.55; font-size: 15px; }
+  .ok .ghost { margin: 12px 0; }
+  .real { display: inline-block; margin-top: 22px; font: 600 14px "Figtree", sans-serif; color: #6B2F8F; }
+  .note { font: 12.5px/1.4 "Figtree", sans-serif; color: #8C8792; margin-top: 8px; }
+
+  .navbar { height: 44px; flex: none; display: flex; justify-content: space-around; align-items: center; background: #fff; }
+
+  /* Info sheets */
+  .sheet-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 60; display: none; }
+  .sheet-scrim.show { display: block; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 61; max-height: 90%; overflow-y: auto; background: #fff; border-radius: 20px 20px 0 0; padding: 16px 18px 18px; display: none; box-shadow: 0 -10px 30px rgba(0,0,0,.2); }
+  .sheet.show { display: block; animation: up .2s ease-out; }
+  .sheet h3 { font-size: 18px; font-weight: 700; padding-right: 40px; line-height: 1.3; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .tag { font-size: 11.5px; font-weight: 700; border-radius: 10px; padding: 2px 9px; background: #EFEDF2; color: #49454F; }
+  .tag.red { background: #FBE3E1; color: #B3261E; }
+  .tag.green { background: #DDF3E5; color: #1E7A46; }
+  .sheet h4 { font-size: 14px; font-weight: 700; margin-top: 14px; }
+  .sheet li { font-size: 13.5px; line-height: 1.45; color: #3D3A42; }
+  .sheet ol, .sheet ul { margin: 6px 0 0 18px; }
+  .sheet li + li { margin-top: 4px; }
+  .sheet code { font-size: 12.5px; background: #F3F1F5; border-radius: 4px; padding: 1px 4px; word-break: break-all; }
+  .sheet .x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #F1EFF3; cursor: pointer; display: grid; place-items: center; }
+  .sheet .rowb { display: flex; gap: 8px; margin-top: 14px; }
+  .sheet .rowb button { flex: 1; height: 44px; border-radius: 10px; border: 1.5px solid #1C1B1F; background: #fff; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .sheet .rowb button.go { background: #1C1B1F; color: #fff; }
+
+  .toast { position: absolute; left: 14px; right: 14px; bottom: 70px; z-index: 70; background: #2B2930; color: #fff; padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.4; opacity: 0; transform: translateY(10px); transition: .2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+  <div class="controls">
+    <button class="modebtn issue" id="m-issue" aria-pressed="true" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M20 8h-2.8a6 6 0 0 0-1.8-2l1.6-1.6-1.4-1.4-2.2 2.2a6 6 0 0 0-2.8 0L8.4 3 7 4.4 8.6 6a6 6 0 0 0-1.8 2H4v2h2.1a6 6 0 0 0 0 2H4v2h2.8a6 6 0 0 0 10.4 0H20v-2h-2.1a6 6 0 0 0 0-2H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/></svg>
+      Issue</button>
+    <button class="modebtn impr" id="m-impr" aria-pressed="false" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
+      Improvement</button>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="status"><span id="clock">5:14</span>
+      <span class="bars"><i style="height:4px"></i><i style="height:7px"></i><i style="height:10px"></i><i style="height:13px"></i></span></div>
+    <div class="mode-banner issue" id="banner">Issue: Play Store link includes the dot and opens a 404</div>
+
+    <div class="store">
+      <div class="shead">
+        <button class="icon-btn proto" data-name="Back" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <div class="appicon"><svg width="22" height="22" viewBox="0 0 30 30" stroke="#fff" stroke-width="3.2" stroke-linecap="round"><path d="M4 6v18M10 10v10M15 7v16M20 11v8M26 5v20"/></svg></div>
+        <div><div class="t">Wispr Flow: AI Voice-to-Text</div><div class="s">Details</div></div>
+      </div>
+      <div class="sbody" id="sbody">
+        <p class="fold">Earlier parts of the Wispr Flow description in the Google Play Store app</p>
+        <span class="ghost"></span><span class="ghost"></span><span class="ghost s"></span>
+        <p style="margin-top:18px">For more, check out Flow on Desktop.</p>
+        <p>Privacy &amp; Security</p>
+        <p>Wispr Flow takes privacy seriously, with HIPAA, SOC 2 Type II, and ISO 27001 compliance. Read our Terms of Service and Privacy Policy at <span id="linkwrap"></span></p>
+        <div class="callout red" id="callout"></div>
+
+        <div class="sec"><h3>More info</h3>
+          <div class="rate"><span class="box">3+</span><div>Rated for 3+<div class="lm proto" data-name="Learn more" style="cursor:pointer">Learn more</div></div></div>
+        </div>
+        <div class="sec"><h3>App info</h3>
+          <div class="kv"><span>Version</span><span>2.8.3</span></div>
+        </div>
+      </div>
+
+      <div class="web" id="web" role="dialog" aria-label="Opened link">
+        <div class="wbar">
+          <button class="icon-btn" id="web-close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+          <div class="url" id="url"></div>
+        </div>
+        <div class="wpage" id="wpage"></div>
+      </div>
+    </div>
+
+    <div class="sheet-scrim" id="sheet-scrim"></div>
+    <section class="sheet" id="sh-issue" role="dialog" aria-modal="true" aria-labelledby="t-issue">
+      <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      <h3 id="t-issue">Play Store listing: the Terms of Service link includes the full stop and opens a 404</h3>
+      <div class="tags"><span class="tag red">Bug</span><span class="tag">Google Play Store, app details</span><span class="tag">Wispr Flow 2.8.3, Android, Vivo 60e</span></div>
+      <h4>Steps to reproduce</h4>
+      <ol>
+        <li>Open the <b>Google Play Store</b> app on the phone and open <b>Wispr Flow: AI Voice-to-Text</b> (installed, version 2.8.3).</li>
+        <li>Tap <b>About this app</b> to open the <b>Details</b> page.</li>
+        <li>Scroll to <b>Privacy &amp; Security</b>.</li>
+        <li>Tap the link <b>https://wisprflow.ai/terms-of-service.</b> It opens in the browser.</li>
+      </ol>
+      <h4>What happens</h4>
+      <ul>
+        <li>The sentence ends with a full stop right after the URL, and Google Play makes the full stop part of the link.</li>
+        <li>The link opens <code>https://wisprflow.ai/terms-of-service.</code> with the dot, which is a <b>404 Page not found</b>.</li>
+        <li>People checking the Terms of Service and Privacy Policy before or after installing cannot reach them from the Play Store listing.</li>
+      </ul>
+      <h4>What was expected</h4>
+      <ul>
+        <li>The link opens <code>https://wisprflow.ai/terms-of-service</code>, the real Terms of Service page.</li>
+      </ul>
+      <div class="rowb"><button class="go" data-try>Try the issue</button></div>
+      <div class="rowb"><button data-close>Done</button></div>
+    </section>
+    <section class="sheet" id="sh-impr" role="dialog" aria-modal="true" aria-labelledby="t-impr">
+      <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      <h3 id="t-impr">Remove the dot after the link</h3>
+      <div class="tags"><span class="tag green">Proposed fix</span><span class="tag">Google Play Store, app details</span></div>
+      <h4>The fix</h4>
+      <ul>
+        <li>In the Play Console, remove the full stop after the URL in the app's full description, so the sentence ends with <code>https://wisprflow.ai/terms-of-service</code>.</li>
+        <li>Tapping the link now opens the real Terms of Service page.</li>
+      </ul>
+      <h4>Also worth checking</h4>
+      <ul>
+        <li>Other links in the Play Store and App Store listings, and in the app, that are followed by punctuation, such as a full stop, comma or closing bracket.</li>
+        <li>The website could also redirect <code>/terms-of-service.</code> to <code>/terms-of-service</code>, so old copies of the text still work.</li>
+      </ul>
+      <div class="rowb"><button class="go" data-try>Try the fix</button></div>
+      <div class="rowb"><button data-close>Done</button></div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <div class="navbar" aria-hidden="true">
+      <svg width="22" height="16" viewBox="0 0 22 16" stroke="#888" stroke-width="2"><path d="M2 2h18M2 8h18M2 14h18"/></svg>
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="9"/></svg>
+      <svg width="14" height="22" viewBox="0 0 14 22" fill="none" stroke="#888" stroke-width="2"><path d="M12 2L3 11l9 9"/></svg>
+    </div>
+  </div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const GOOD = 'https://wisprflow.ai/terms-of-service';
+  const BAD = GOOD + '.';
+  let mode = 'issue';
+  function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 3000); }
+
+  function renderLink() {
+    const w = $('linkwrap'), c = $('callout');
+    if (mode === 'issue') {
+      w.innerHTML = '<a class="tos mark" id="tos" href="#" role="link">' + GOOD + '<span class="dot">.</span></a>';
+      c.className = 'callout red';
+      c.textContent = 'Bug: the full stop is part of the link, so tapping it opens a 404 page.';
+    } else {
+      w.innerHTML = '<a class="tos" id="tos" href="#" role="link">' + GOOD + '</a>';
+      c.className = 'callout green';
+      c.textContent = 'Fix: the full stop is removed, so the link opens the real Terms of Service page.';
+    }
+    $('tos').addEventListener('click', e => { e.preventDefault(); openWeb(); });
+  }
+
+  function openWeb() {
+    const bad = mode === 'issue';
+    $('url').innerHTML = bad ? 'wisprflow.ai/terms-of-service<span class="bad">.</span>' : 'wisprflow.ai/terms-of-service';
+    $('wpage').innerHTML = bad
+      ? `<div class="e404"><div class="n">404</div><h2>Page not found</h2><p>The address ends with a dot, <b>/terms-of-service.</b>, and no page exists there.</p>
+         <a class="real" href="${BAD}" target="_blank" rel="noopener">Open the real link with the dot</a><p class="note">Opens in your browser, to confirm the 404.</p></div>`
+      : `<div class="ok"><span class="ok-tag">Opens correctly</span><h2>Terms of Service</h2><p>The link now goes to <b>/terms-of-service</b>, the real page.</p>
+         <span class="ghost"></span><span class="ghost"></span><span class="ghost" style="width:80%"></span><span class="ghost"></span><span class="ghost" style="width:60%"></span>
+         <a class="real" href="${GOOD}" target="_blank" rel="noopener">Open the real page</a><p class="note">Opens wisprflow.ai in your browser. The lines above stand in for the page text.</p></div>`;
+    $('web').classList.add('show');
+    $('web-close').focus({ preventScroll: true });
+  }
+  function closeWeb() { $('web').classList.remove('show'); }
+  $('web-close').addEventListener('click', closeWeb);
+
+  function setMode(m) {
+    mode = m; closeWeb();
+    $('m-issue').setAttribute('aria-pressed', m === 'issue');
+    $('m-impr').setAttribute('aria-pressed', m === 'impr');
+    $('banner').className = 'mode-banner ' + m;
+    $('banner').textContent = m === 'issue' ? 'Issue: Play Store link includes the dot and opens a 404' : 'Proposed fix: no dot, the link opens the real page';
+    renderLink();
+  }
+  let openSheet = null;
+  function showSheet(id) {
+    closeSheet(); $('toast').classList.remove('show');
+    openSheet = $(id); openSheet.classList.add('show'); $('sheet-scrim').classList.add('show');
+    openSheet.scrollTop = 0; openSheet.querySelector('.x').focus({ preventScroll: true });
+  }
+  function closeSheet() { if (openSheet) openSheet.classList.remove('show'); $('sheet-scrim').classList.remove('show'); openSheet = null; }
+  $('m-issue').addEventListener('click', () => { setMode('issue'); showSheet('sh-issue'); });
+  $('m-impr').addEventListener('click', () => { setMode('impr'); showSheet('sh-impr'); });
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheet));
+  $('sheet-scrim').addEventListener('click', closeSheet);
+  document.querySelectorAll('[data-try]').forEach(b => b.addEventListener('click', () => {
+    closeSheet(); const s = $('sbody'); s.scrollTop = s.scrollHeight;
+    toast('Tap the Terms of Service link under Privacy & Security in the Play Store details.');
+  }));
+  document.querySelectorAll('.proto').forEach(el => el.addEventListener('click', () => toast(`This is just a prototype of the Terms of Service link, so ${el.dataset.name} is disabled.`)));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (openSheet) closeSheet(); else closeWeb(); } });
+
+  setMode('issue');
+  function tick() { const d = new Date(); let h = d.getHours() % 12 || 12; $('clock').textContent = h + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  tick(); setInterval(tick, 30000);
+})();
+</script>
+</body>
+</html>

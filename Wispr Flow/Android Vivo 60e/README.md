@@ -20,7 +20,9 @@ UX prototypes and bugs found while testing the Wispr Flow Android app on a Vivo 
 | [Stretched Words in Very Casual Style](./Stretched%20Words%20in%20Very%20Casual%20Style) | An improvement request with an animated GIF: in Very Casual or Excited style, saying "whaaaaaaaat" is typed as plain "What", so the tone is lost. |
 | [Two OFF Toggles, Two Colours](./Two%20OFF%20Toggles%20Two%20Colours) | A UI bug, reported with an animated GIF: in Settings, Data & Privacy, both toggles are off, but Dictation cloud storage has a light purple tint that looks on next to the grey one. The fix uses one grey for every off toggle and a lock icon for the locked one. |
 | [Search Transcript History by Words and Dates](./Search%20Transcript%20History%20by%20Words%20and%20Dates) | Home has no way to find old transcripts. The prototype adds search with highlighted matches, a From and To date range (From alone means that one day), and "Copied" shown right on a transcript when it is tapped. Issue and Improvement buttons compare both. |
+| [Play Store Listing: Terms of Service Link Opens a 404](./Play%20Store%20Terms%20of%20Service%20Link%20Opens%20a%20404) | In the Play Store Details page, the Terms of Service link includes the sentence's full stop and opens a 404. The prototype shows the bug and the fix (remove the dot), with Issue and Improvement buttons. |
+| [Pause and Resume Dictation](./Pause%20and%20Resume%20Dictation) | An improvement request with an animated GIF: Ajay pauses Wispr Flow when his kids interrupt, then resumes, so the message stays clean and the side conversation is never typed. |
 
-All prototypes are plain HTML, CSS and JavaScript in a single file, with no build step. Some findings, like Stretched Words in Very Casual Style and Two OFF Toggles, Two Colours, are reported with an animated GIF instead.
+All prototypes are plain HTML, CSS and JavaScript in a single file, with no build step. Some findings, like Stretched Words in Very Casual Style, Two OFF Toggles, Two Colours and Pause and Resume Dictation, are reported with an animated GIF instead.
 
 Prototypes by Santhosh Tuppad.
