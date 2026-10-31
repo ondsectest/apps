@@ -237,10 +237,10 @@
     $('url').innerHTML = bad ? 'wisprflow.ai/terms-of-service<span class="bad">.</span>' : 'wisprflow.ai/terms-of-service';
     $('wpage').innerHTML = bad
       ? `<div class="e404"><div class="n">404</div><h2>Page not found</h2><p>The address ends with a dot, <b>/terms-of-service.</b>, and no page exists there.</p>
-         <a class="real" href="${BAD}" target="_blank" rel="noopener">Open the real link with the dot</a><p class="note">Opens in your browser, to confirm the 404.</p></div>`
+         <a class="real" href="${BAD}" rel="noopener">Open the real link with the dot</a><p class="note">Opens in your browser, to confirm the 404.</p></div>`
       : `<div class="ok"><span class="ok-tag">Opens correctly</span><h2>Terms of Service</h2><p>The link now goes to <b>/terms-of-service</b>, the real page.</p>
          <span class="ghost"></span><span class="ghost"></span><span class="ghost" style="width:80%"></span><span class="ghost"></span><span class="ghost" style="width:60%"></span>
-         <a class="real" href="${GOOD}" target="_blank" rel="noopener">Open the real page</a><p class="note">Opens wisprflow.ai in your browser. The lines above stand in for the page text.</p></div>`;
+         <a class="real" href="${GOOD}" rel="noopener">Open the real page</a><p class="note">Opens wisprflow.ai in your browser. The lines above stand in for the page text.</p></div>`;
     $('web').classList.add('show');
     $('web-close').focus({ preventScroll: true });
   }
