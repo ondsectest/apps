@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dictating a Password: Warn and Don't Save</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { font-family: "Figtree", system-ui, sans-serif; background: #2A2730; color: #1C1B1F; display: flex; flex-direction: column; align-items: center; padding: 14px 10px; gap: 10px; overflow-x: hidden; }
+  button, input { font-family: inherit; color: inherit; }
+  .serif { font-family: "EB Garamond", Georgia, serif; }
+
+  .controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; flex: none; }
+  .modebtn { border: 2px solid transparent; font-size: 14px; font-weight: 700; padding: 8px 18px; border-radius: 20px; cursor: pointer; display: flex; gap: 8px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.3); color: #fff; }
+  .modebtn.issue { background: #B3261E; }
+  .modebtn.impr { background: #1E7A46; }
+  .modebtn.play { background: #F1EFF3; color: #1C1B1F; }
+  .modebtn[aria-pressed="false"] { opacity: .55; box-shadow: none; }
+  .modebtn[aria-pressed="true"] { border-color: #fff; }
+  .banner { font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 14px; color: #fff; }
+  .banner.issue { background: #B3261E; }
+  .banner.impr { background: #1E7A46; }
+
+  .fitbox { width: 100%; display: flex; justify-content: center; overflow: hidden; }
+  .stage { width: 1000px; height: 600px; transform-origin: top center; flex: none; position: relative; }
+  .desk { position: absolute; inset: 0; border-radius: 14px; background: linear-gradient(135deg,#3B3350,#1F2433); overflow: hidden; }
+
+  /* Browser window with a fictional sign-in page */
+  .browser { position: absolute; left: 24px; top: 24px; width: 560px; height: 436px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,.35); }
+  .bbar { height: 40px; background: #EEECF1; display: flex; align-items: center; gap: 8px; padding: 0 12px; }
+  .bbar i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+  .addr { flex: 1; margin-left: 10px; height: 26px; border-radius: 13px; background: #fff; font-size: 12.5px; color: #6F6B75; display: flex; align-items: center; padding: 0 12px; gap: 6px; }
+  .site { padding: 26px 70px; }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 20px; color: #24508F; }
+  .site h1 { font-size: 24px; font-weight: 700; margin-top: 22px; }
+  .site p.sub { color: #6F6B75; font-size: 14px; margin-top: 4px; }
+  .fl { display: block; font-size: 13.5px; font-weight: 600; margin-top: 18px; color: #3D3A42; }
+  .inp { margin-top: 6px; height: 44px; border: 1.5px solid #CFCAD5; border-radius: 9px; display: flex; align-items: center; padding: 0 12px; font-size: 16px; cursor: text; position: relative; background: #fff; }
+  .inp.focus { border-color: #24508F; box-shadow: 0 0 0 3px rgba(36,80,143,.15); }
+  .inp .val { white-space: pre; }
+  .inp .ph { color: #ADA8B3; }
+  .inp .caret { width: 2px; height: 20px; background: #24508F; margin-left: 1px; display: none; animation: blink 1s steps(1) infinite; }
+  .inp.focus .caret { display: block; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .inp .lock { position: absolute; right: 10px; top: 11px; }
+  .signin { margin-top: 22px; width: 100%; height: 44px; border: 0; border-radius: 9px; background: #24508F; color: #fff; font-size: 15.5px; font-weight: 600; cursor: pointer; }
+  .mock { position: absolute; bottom: 10px; left: 0; right: 0; text-align: center; font-size: 11.5px; color: #9D99A3; }
+
+  /* Wispr Flow history panel (mock) */
+  .hub { position: absolute; right: 24px; top: 24px; width: 368px; height: 436px; background: #F6F6F7; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,.35); display: flex; flex-direction: column; }
+  .hhead { padding: 14px 16px 8px; display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 17px; }
+  .hhead small { margin-left: auto; font-weight: 600; font-size: 12px; color: #85818B; }
+  .hlist { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
+  .hday { font-size: 24px; margin: 6px 4px 8px; }
+  .hitem { background: #EDECF0; border-radius: 14px; padding: 11px 13px; margin-bottom: 8px; font-size: 14.5px; line-height: 1.4; color: #2A2830; position: relative; }
+  .hitem .tm { font-size: 12px; color: #9D99A3; margin-top: 4px; }
+  .hitem.new { animation: flash 1.2s ease-out; }
+  @keyframes flash { from { background: #FFF4C2; } to { background: #EDECF0; } }
+  .hitem.leak { outline: 2.5px solid #B3261E; }
+  .hitem .leaktag { display: inline-block; margin-top: 6px; font-size: 11.5px; font-weight: 700; color: #fff; background: #B3261E; border-radius: 8px; padding: 2px 8px; }
+  .hitem.safe { color: #5F5C63; font-style: italic; }
+  .hitem .safetag { display: inline-block; margin-top: 6px; font-size: 11.5px; font-weight: 700; font-style: normal; color: #1E7A46; background: #DDF3E5; border-radius: 8px; padding: 2px 8px; }
+
+  /* Flow Bar */
+  .flowbar { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); background: #121216; border: 1px solid #444; border-radius: 22px; height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 16px; color: #fff; font-size: 14px; font-weight: 600; box-shadow: 0 10px 24px rgba(0,0,0,.4); transition: .2s; white-space: nowrap; }
+  .flowbar .wave { display: flex; gap: 3px; align-items: center; height: 22px; }
+  .flowbar .wave i { width: 4px; border-radius: 2px; background: #fff; height: 5px; display: block; }
+  .flowbar.listen .wave i { animation: wv .7s ease-in-out infinite; }
+  .flowbar.listen .wave i:nth-child(2n) { animation-delay: .15s; } .flowbar.listen .wave i:nth-child(3n) { animation-delay: .3s; }
+  @keyframes wv { 0%,100% { height: 5px; } 50% { height: 20px; } }
+  .flowbar.warn { background: #2A2213; border-color: #8E7440; color: #F5DFA8; height: auto; padding: 10px 14px; border-radius: 16px; white-space: normal; width: 520px; }
+  .flowbar .wbtns { display: flex; gap: 8px; margin-top: 8px; }
+  .flowbar .wbtns button { height: 32px; border-radius: 9px; border: 1px solid #8E7440; background: #3A2F18; color: #F5DFA8; font-size: 13px; font-weight: 700; padding: 0 12px; cursor: pointer; }
+  .flowbar .wbtns button.pri { background: #F5DFA8; color: #2A2213; }
+
+  /* fn button and speech */
+  .fnrow { flex: none; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .fn { width: 64px; height: 50px; border-radius: 10px; border: 2px solid #fff; background: #3A3646; color: #fff; font-size: 20px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 0 #15131B; }
+  .fn.on { background: #6B2F8F; transform: translateY(3px); box-shadow: 0 1px 0 #15131B; }
+  .fnhint { color: #DAD6DE; font-size: 13.5px; max-width: 420px; line-height: 1.4; }
+  .speech { position: absolute; z-index: 5; background: #fff; border: 2.5px solid #1C1B1F; border-radius: 16px; padding: 8px 14px; font-weight: 700; font-size: 16px; display: none; }
+  .speech.show { display: block; }
+  .speech::after { content: ""; position: absolute; bottom: -12px; left: 30px; border: 10px solid transparent; border-top-color: #1C1B1F; border-bottom: 0; }
+
+  .caption { position: absolute; left: 50%; top: 470px; transform: translateX(-50%); z-index: 6; background: rgba(18,18,22,.92); color: #fff; font-size: 15px; font-weight: 600; border-radius: 12px; padding: 8px 16px; display: none; max-width: 900px; text-align: center; }
+  .caption.show { display: block; }
+  .caption.red { background: #B3261E; }
+  .caption.green { background: #1E7A46; }
+
+  /* Info sheet */
+  .sheet-scrim { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 60; display: none; }
+  .sheet-scrim.show { display: block; }
+  .sheet { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); width: min(580px, 100%); z-index: 61; max-height: 88vh; overflow-y: auto; background: #fff; border-radius: 20px 20px 0 0; padding: 18px 20px 20px; display: none; }
+  .sheet.show { display: block; }
+  .sheet h3 { font-size: 18px; font-weight: 700; padding-right: 40px; line-height: 1.3; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .tag { font-size: 11.5px; font-weight: 700; border-radius: 10px; padding: 2px 9px; background: #EFEDF2; color: #49454F; }
+  .tag.red { background: #FBE3E1; color: #B3261E; }
+  .tag.green { background: #DDF3E5; color: #1E7A46; }
+  .sheet h4 { font-size: 14px; font-weight: 700; margin-top: 14px; }
+  .sheet li { font-size: 13.5px; line-height: 1.45; color: #3D3A42; }
+  .sheet ol, .sheet ul { margin: 6px 0 0 18px; }
+  .sheet li + li { margin-top: 4px; }
+  .sheet .x { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #F1EFF3; cursor: pointer; display: grid; place-items: center; }
+  .sheet .rowb { display: flex; gap: 8px; margin-top: 14px; }
+  .sheet .rowb button { flex: 1; height: 44px; border-radius: 10px; border: 1.5px solid #1C1B1F; background: #fff; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .sheet .rowb button.go { background: #1C1B1F; color: #fff; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 10px); z-index: 70; background: #F1EFF3; color: #1C1B1F; padding: 11px 16px; border-radius: 10px; font-size: 14px; opacity: 0; transition: .2s; pointer-events: none; max-width: 90vw; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  body.rec .controls, body.rec .fnrow { visibility: hidden; }
+</style>
+<style id="proto-links-css">
+  .proto-links { flex: none; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; margin: 14px auto 6px; padding: 0 10px 10px; font: 600 13px/1 "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .proto-links a { display: inline-flex; align-items: center; gap: 7px; background: #fff; color: #1C1B1F; border: 1px solid #DDD8E3; border-radius: 16px; padding: 7px 13px; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .proto-links a:hover { border-color: #6B2F8F; color: #6B2F8F; }
+  .proto-links a:focus-visible { outline: 2px solid #6B2F8F; outline-offset: 2px; }
+  @media (min-width: 501px) { body { flex-direction: column; justify-content: safe center; height: auto; min-height: 100%; } }
+</style>
+</head>
+<body>
+  <div class="controls">
+    <button class="modebtn issue" id="m-issue" aria-pressed="true" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M20 8h-2.8a6 6 0 0 0-1.8-2l1.6-1.6-1.4-1.4-2.2 2.2a6 6 0 0 0-2.8 0L8.4 3 7 4.4 8.6 6a6 6 0 0 0-1.8 2H4v2h2.1a6 6 0 0 0 0 2H4v2h2.8a6 6 0 0 0 10.4 0H20v-2h-2.1a6 6 0 0 0 0-2H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/></svg>
+      Issue</button>
+    <button class="modebtn impr" id="m-impr" aria-pressed="false" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
+      Improvement</button>
+    <button class="modebtn play" id="play">▶ Play demo</button>
+  </div>
+  <div class="banner issue" id="banner">Issue: how it works today</div>
+
+  <div class="fitbox" id="fitbox"><div class="stage" id="stage"><div class="desk">
+    <div class="browser">
+      <div class="bbar"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i>
+        <div class="addr"><svg width="11" height="12" viewBox="0 0 12 14" fill="#6F6B75"><path d="M2 6h8v7H2zM3.5 6V4a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="#6F6B75" stroke-width="1.6"/><rect x="2" y="6" width="8" height="7" rx="1.5"/></svg>mail.example.com/sign-in</div></div>
+      <div class="site">
+        <div class="logo"><svg width="26" height="26" viewBox="0 0 24 24" fill="#24508F"><path d="M3 6h18v12H3z" opacity=".25"/><path d="M3 6l9 7 9-7" stroke="#24508F" stroke-width="2" fill="none"/></svg>Example Mail</div>
+        <h1>Sign in</h1>
+        <p class="sub">Use your Example Mail account</p>
+        <label class="fl">Username</label>
+        <div class="inp" id="f-user" data-f="user"><span class="val" id="v-user"></span><span class="caret"></span><span class="ph" id="p-user">Enter your username</span></div>
+        <label class="fl">Password</label>
+        <div class="inp" id="f-pass" data-f="pass"><span class="val" id="v-pass"></span><span class="caret"></span><span class="ph" id="p-pass">Enter your password</span>
+          <svg class="lock" width="16" height="18" viewBox="0 0 12 14"><rect x="1.5" y="6" width="9" height="7" rx="1.5" fill="#ADA8B3"/><path d="M3.5 6V4a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="#ADA8B3" stroke-width="1.6"/></svg></div>
+        <button class="signin proto" data-name="Sign in">Sign in</button>
+      </div>
+      <div class="mock">A fictional site with mock data, made for this demo.</div>
+    </div>
+
+    <div class="hub">
+      <div class="hhead"><svg width="22" height="22" viewBox="0 0 30 30" stroke="#1C1B1F" stroke-width="3" stroke-linecap="round"><path d="M3 5v20M9 10v10M15 7v16M21 11v8M27 4v22"/></svg>Wispr Flow<small>History (mock)</small></div>
+      <div class="hlist" id="hlist"></div>
+    </div>
+
+    <div class="speech" id="speech"></div>
+    <div class="flowbar" id="flowbar"><span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span id="fbtext">Hold fn to dictate</span></div>
+    <div class="caption" id="caption"></div>
+  </div></div></div>
+
+  <div class="fnrow">
+    <button class="fn" id="fn" aria-label="Hold fn to dictate">fn</button>
+    <span class="fnhint">Click a field, then click <b>fn</b> to "speak" the mock text for it. Or press <b>Play demo</b>.</span>
+  </div>
+
+  <div class="sheet-scrim" id="sheet-scrim"></div>
+  <section class="sheet" id="sh-issue" role="dialog" aria-modal="true" aria-labelledby="t-issue">
+    <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+    <h3 id="t-issue">A dictated password is saved in plain text in the transcript history</h3>
+    <div class="tags"><span class="tag red">Security issue</span><span class="tag">Dictation, History</span><span class="tag">Desktop app, MacBook Pro</span></div>
+    <h4>What happens (shown with mock data)</h4>
+    <ol>
+      <li>On a sign-in page, the username is dictated with Wispr Flow: fine.</li>
+      <li>In the password field, Wispr Flow does not warn or stop. The password is typed in, and the field shows dots.</li>
+      <li>Wispr Flow's history now shows the password <b>in plain text</b>, like any other transcript.</li>
+    </ol>
+    <h4>Why it matters</h4>
+    <ul>
+      <li>Anyone with access to the computer or the account can read the password in history.</li>
+      <li>Depending on settings, the transcript may also be synced to the cloud or eligible for model training.</li>
+      <li>People do not expect a password field to be remembered anywhere.</li>
+    </ul>
+    <div class="rowb"><button class="go" data-try>Try the issue</button></div>
+    <div class="rowb"><button data-close>Done</button></div>
+  </section>
+  <section class="sheet" id="sh-impr" role="dialog" aria-modal="true" aria-labelledby="t-impr">
+    <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+    <h3 id="t-impr">Yes, warn, and never save what is dictated into a password field</h3>
+    <div class="tags"><span class="tag green">Improvement</span><span class="tag">Dictation, History</span></div>
+    <h4>What changes</h4>
+    <ul>
+      <li>Wispr Flow detects a password field. macOS marks these as secure text fields, and browsers expose web password inputs the same way.</li>
+      <li>When fn is pressed there, the Flow Bar shows a clear warning: "This is a password field. Dictating a password lets people nearby hear it."</li>
+      <li>Two choices: <b>Type it instead</b> (default) or <b>Dictate privately</b>.</li>
+      <li>With Dictate privately, the text goes into the field, but nothing is saved: no history entry text, no cloud sync, no training, no clipboard. History shows only "Password field, not saved".</li>
+      <li>Optionally, the same protection for other secrets in any field, such as one-time codes, card numbers and API keys.</li>
+    </ul>
+    <h4>Why a warning alone is not enough</h4>
+    <ul>
+      <li>A warning can be dismissed. The real protection is never storing it, so even a hurried user is safe.</li>
+    </ul>
+    <div class="rowb"><button class="go" data-try>Try the improvement</button></div>
+    <div class="rowb"><button data-close>Done</button></div>
+  </section>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const MOCK = { user: 'santhosh.demo', pass: 'Mango Rocket 42' };   // mock data only
+  let mode = 'issue', focus = null, busy = false, pendingPass = false;
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 3200); }
+
+  function fit() { const s = Math.min(window.innerWidth - 20, 1000) / 1000; $('stage').style.transform = 'scale(' + s + ')'; $('fitbox').style.height = (600 * s) + 'px'; }
+  window.addEventListener('resize', fit); fit();
+
+  const HIST0 = [
+    ['10:12am', 'Can you send the slides before lunch? I want to review them once.'],
+    ['9:40am', 'Reminder: call the bank about the card replacement.'],
+  ];
+  function resetAll() {
+    $('v-user').textContent = ''; $('v-pass').textContent = '';
+    $('p-user').style.display = ''; $('p-pass').style.display = '';
+    setFocus(null); bar('idle'); caption(''); speech(null);
+    $('hlist').innerHTML = '<h3 class="hday serif">Today</h3>';
+    HIST0.forEach(([tm, t]) => addHist(t, tm, null, true));
+  }
+  function addHist(text, tm, kind, old) {
+    const el = document.createElement('div'); el.className = 'hitem' + (old ? '' : ' new') + (kind === 'leak' ? ' leak' : kind === 'safe' ? ' safe' : '');
+    const t = document.createElement('div'); t.textContent = text; el.appendChild(t);
+    if (kind === 'leak') el.insertAdjacentHTML('beforeend', '<span class="leaktag">Password saved in plain text</span>');
+    if (kind === 'safe') el.insertAdjacentHTML('beforeend', '<span class="safetag">Nothing stored, synced or used for training</span>');
+    el.insertAdjacentHTML('beforeend', '<div class="tm">' + tm + '</div>');
+    const h = $('hlist').querySelector('.hday'); h.after(el);
+  }
+  function setFocus(f) {
+    focus = f;
+    $('f-user').classList.toggle('focus', f === 'user'); $('f-pass').classList.toggle('focus', f === 'pass');
+  }
+  function bar(state, text) {
+    const b = $('flowbar'); b.className = 'flowbar' + (state === 'listen' ? ' listen' : state === 'warn' ? ' warn' : '');
+    if (state === 'warn') {
+      b.innerHTML = `<div><div style="display:flex;gap:8px;align-items:flex-start;font-weight:700"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C451" stroke-width="2" style="flex:none;margin-top:1px"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5" stroke-linecap="round"/></svg>This is a password field. Dictating a password lets people nearby hear it.</div>
+        <div style="font-weight:500;font-size:13px;margin:4px 0 0 26px">If you dictate, it goes into the field only. Nothing is saved to history, synced or used for training.</div>
+        <div class="wbtns" style="margin-left:26px"><button class="pri" id="w-type">Type it instead</button><button id="w-priv">Dictate privately</button></div></div>`;
+      $('w-type').addEventListener('click', () => { if (!demoRunning) chooseType(); });
+      $('w-priv').addEventListener('click', () => { if (!demoRunning) choosePrivate(); });
+      return;
+    }
+    b.innerHTML = '<span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span>' + (text || (state === 'listen' ? 'Listening' : 'Hold fn to dictate')) + '</span>';
+  }
+  function caption(t, color) { const c = $('caption'); c.textContent = t; c.className = 'caption' + (t ? ' show' : '') + (color ? ' ' + color : ''); }
+  function speech(t, f) {
+    const s = $('speech');
+    if (!t) { s.classList.remove('show'); return; }
+    s.textContent = '"' + t + '"'; s.style.left = '110px'; s.style.top = (f === 'pass' ? 232 : 160) + 'px';
+    s.classList.add('show');
+  }
+  async function typeInto(f, text) {
+    $('p-' + f).style.display = 'none';
+    const v = $('v-' + f);
+    for (let i = 1; i <= text.length; i++) { v.textContent = f === 'pass' ? '•'.repeat(i) : text.slice(0, i); await sleep(55); }
+  }
+  async function dictate(f, save) {
+    busy = true;
+    $('fn').classList.add('on'); bar('listen'); speech(MOCK[f], f);
+    await sleep(1300);
+    $('fn').classList.remove('on'); speech(null);
+    await typeInto(f, MOCK[f]);
+    bar('idle');
+    if (save === 'leak') addHist(MOCK[f], 'just now', 'leak');
+    else if (save === 'safe') addHist('Password field, not saved', 'just now', 'safe');
+    else addHist(MOCK[f], 'just now');
+    busy = false;
+  }
+  function chooseType() { pendingPass = false; bar('idle'); caption('Good: the password is typed on the keyboard, not dictated.', 'green'); }
+  async function choosePrivate() { pendingPass = false; caption(''); await dictate('pass', 'safe'); caption('Dictated privately: the field is filled, and history keeps no password.', 'green'); }
+
+  async function pressFn() {
+    if (busy || demoRunning) return;
+    if (!focus) { toast('Click the Username or Password field first.'); return; }
+    if (focus === 'pass' && (mode === 'impr')) { pendingPass = true; bar('warn'); return; }
+    if (focus === 'pass') { await dictate('pass', 'leak'); caption('The password is now in history, in plain text.', 'red'); return; }
+    await dictate('user');
+  }
+  $('fn').addEventListener('click', pressFn);
+  ['f-user', 'f-pass'].forEach(id => $(id).addEventListener('click', () => { if (!demoRunning) { setFocus($(id).dataset.f); if (!pendingPass) bar('idle'); } }));
+
+  // Scripted demo (also used for the video)
+  let demoRunning = false;
+  async function runPart(m) {
+    setMode(m, true); resetAll();
+    caption(m === 'issue' ? 'Today: Wispr Flow treats a password like any other text.' : 'Improvement: Wispr Flow knows it is a password field.', m === 'issue' ? 'red' : 'green');
+    await sleep(2200);
+    caption('Username: dictated with Wispr Flow.'); setFocus('user'); await sleep(700);
+    await dictate('user'); await sleep(900);
+    setFocus('pass'); caption('Now the password field.'); await sleep(1000);
+    if (m === 'issue') {
+      await dictate('pass', 'leak'); await sleep(300);
+      caption('No warning. The field shows dots, but history shows the password in plain text.', 'red'); await sleep(4200);
+    } else {
+      $('fn').classList.add('on'); caption('fn pressed in a password field: Wispr Flow warns first.', 'green'); await sleep(1600); caption(''); bar('warn'); await sleep(3800);
+      $('fn').classList.remove('on');
+      const b = $('w-priv'); if (b) b.style.outline = '3px solid #fff'; await sleep(1500);
+      await dictate('pass', 'safe'); await sleep(300);
+      caption('The field is filled, and history keeps no password: nothing stored, synced or trained on.', 'green'); await sleep(4500);
+    }
+  }
+  async function playDemo() {
+    if (demoRunning || busy) return; demoRunning = true;
+    await runPart('issue'); await runPart('impr');
+    caption('Yes, warn, and never save what is dictated into a password field.', 'green'); await sleep(3500);
+    demoRunning = false;
+  }
+  $('play').addEventListener('click', playDemo);
+
+  // Issue / Improvement
+  function setMode(m, silent) {
+    mode = m;
+    $('m-issue').setAttribute('aria-pressed', m === 'issue'); $('m-impr').setAttribute('aria-pressed', m === 'impr');
+    $('banner').className = 'banner ' + m;
+    $('banner').textContent = m === 'issue' ? 'Issue: how it works today' : 'Improvement: warn, and never save a dictated password';
+    if (!silent) resetAll();
+  }
+  let openSheet = null;
+  function showSheet(id) { closeSheet(); openSheet = $(id); openSheet.classList.add('show'); $('sheet-scrim').classList.add('show'); openSheet.scrollTop = 0; openSheet.querySelector('.x').focus({ preventScroll: true }); }
+  function closeSheet() { if (openSheet) openSheet.classList.remove('show'); $('sheet-scrim').classList.remove('show'); openSheet = null; }
+  $('m-issue').addEventListener('click', () => { if (demoRunning) return; setMode('issue'); showSheet('sh-issue'); });
+  $('m-impr').addEventListener('click', () => { if (demoRunning) return; setMode('impr'); showSheet('sh-impr'); });
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheet));
+  $('sheet-scrim').addEventListener('click', closeSheet);
+  document.querySelectorAll('[data-try]').forEach(b => b.addEventListener('click', () => { closeSheet(); setFocus('user'); toast('Click fn to dictate the username, then click the Password field and click fn again.'); }));
+  document.querySelectorAll('.proto').forEach(el => el.addEventListener('click', () => toast(`This is a mock page, so ${el.dataset.name} does nothing.`)));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+
+  setMode('issue');
+  if (location.hash === '#record') { document.body.classList.add('rec'); setTimeout(playDemo, 600); }
+})();
+</script>
+<nav class="proto-links" aria-label="About this prototype">
+  <a href="https://github.com/ondsectest/apps/tree/main/Wispr%20Flow/Wispr%20Flow%20Desktop%20on%20MacBook%20Pro/Dictating%20a%20Password%20Warn%20and%20Do%20Not%20Save" rel="noopener"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
+  <a href="https://www.linkedin.com/in/santhosh-tuppad-338b7412/" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="#0A66C2" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>Connect on LinkedIn</a>
+</nav>
+</body>
+</html>
