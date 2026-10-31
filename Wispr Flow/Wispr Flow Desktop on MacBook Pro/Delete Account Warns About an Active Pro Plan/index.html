@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delete Account Warns About an Active Pro Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { font-family: "Figtree", system-ui, sans-serif; background: #2A2730; color: #ECEAEE; display: flex; flex-direction: column; align-items: center; padding: 14px 10px; gap: 12px; overflow-x: hidden; }
+  button, input { font-family: inherit; color: inherit; }
+  .serif { font-family: "EB Garamond", Georgia, serif; }
+
+  .controls { display: flex; justify-content: center; gap: 10px; flex: none; }
+  .modebtn { border: 2px solid transparent; font-size: 14px; font-weight: 700; padding: 8px 18px; border-radius: 20px; cursor: pointer; display: flex; gap: 8px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.3); color: #fff; }
+  .modebtn.issue { background: #B3261E; }
+  .modebtn.impr { background: #1E7A46; }
+  .modebtn[aria-pressed="false"] { opacity: .55; box-shadow: none; }
+  .modebtn[aria-pressed="true"] { border-color: #fff; }
+  .banner { font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 14px; color: #fff; }
+  .banner.issue { background: #B3261E; }
+  .banner.impr { background: #1E7A46; }
+
+  /* The desktop window is 1000 x 660 and is scaled to fit the screen */
+  .fitbox { width: 100%; display: flex; justify-content: center; }
+  .stage { width: 1000px; height: 660px; transform-origin: top center; flex: none; }
+  .win { width: 1000px; height: 660px; background: #141414; border-radius: 14px; border: 1px solid #333; box-shadow: 0 30px 70px rgba(0,0,0,.5); display: flex; overflow: hidden; position: relative; }
+  .side { width: 220px; flex: none; border-right: 1px solid #262626; padding: 22px 12px 14px; display: flex; flex-direction: column; }
+  .side h6 { font-size: 11.5px; letter-spacing: .14em; color: #8E8A93; font-weight: 600; margin: 0 8px 12px; }
+  .nav { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 9px; font-size: 15.5px; color: #CFCCD3; cursor: pointer; border: 0; background: none; width: 100%; text-align: left; }
+  .nav svg { flex: none; }
+  .nav.active { background: #222; color: #fff; }
+  .nav:hover { background: #1D1D1D; }
+  .side hr { border: 0; border-top: 1px solid #262626; margin: 12px 6px 16px; }
+  .ver { margin-top: auto; font-size: 12.5px; color: #77737C; padding: 0 8px; display: flex; justify-content: space-between; align-items: center; }
+
+  .main { flex: 1; padding: 50px 50px 0; position: relative; }
+  .main h1 { font-size: 40px; font-weight: 400; color: #E6E4E8; margin-bottom: 30px; }
+  .card { background: #181818; border-radius: 14px; padding: 6px 22px; }
+  .row { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #262626; font-size: 15.5px; color: #D8D5DB; }
+  .row:last-child { border-bottom: 0; }
+  .field { width: 230px; height: 40px; border: 1px solid #2E2E2E; border-radius: 9px; background: #141414; padding: 0 12px; font-size: 15px; display: flex; align-items: center; color: #6F6B74; }
+  .muted { color: #9D99A2; }
+  .pro { font-size: 12.5px; font-weight: 700; color: #1C1B1F; background: #E7D7F7; border-radius: 10px; padding: 3px 10px; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,#5B4A6E,#2F2838); }
+  .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; }
+  .danger { background: none; border: 0; color: #E07F76; font-size: 14.5px; cursor: pointer; padding: 6px 2px; }
+  .save { background: #6E6E6E; color: #111; border: 0; border-radius: 9px; font-size: 15.5px; padding: 10px 20px; cursor: default; }
+
+  /* Delete dialog */
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.55); display: none; z-index: 10; }
+  .scrim.show { display: block; }
+  .dlg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; background: #1C1C1C; border: 1px solid #3A3A3A; border-radius: 16px; padding: 26px 26px 22px; z-index: 11; display: none; }
+  .dlg.show { display: block; animation: pop .16s ease-out; }
+  @keyframes pop { from { opacity: 0; transform: translate(-50%, -48%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+  .dlg h2 { font-size: 19px; font-weight: 600; color: #F1EFF3; padding-right: 40px; line-height: 1.3; }
+  .dlg .x { position: absolute; top: 20px; right: 20px; width: 34px; height: 34px; border: 0; background: none; border-radius: 8px; cursor: pointer; display: grid; place-items: center; }
+  .dlg .x:hover { background: #2A2A2A; }
+  .dlg p { font-size: 15px; color: #B8B4BD; line-height: 1.5; margin-top: 10px; }
+  .dlg label.lbl { display: block; font-size: 14.5px; color: #CFCCD3; margin-top: 22px; }
+  .dlg input[type=text] { width: 100%; height: 46px; margin-top: 10px; background: #141414; border: 2px solid #8A878F; border-radius: 10px; padding: 0 14px; font-size: 15.5px; outline: 0; }
+  .dlg input[type=text]:focus { border-color: #CFCCD3; }
+  .acts { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
+  .btn { height: 44px; border-radius: 10px; border: 0; padding: 0 20px; font-size: 15.5px; font-weight: 500; cursor: pointer; }
+  .btn.back { background: #2C2C2C; color: #F1EFF3; }
+  .btn.del { background: #A9473F; color: #FBE9E6; }
+  .btn.del[aria-disabled="true"] { background: #4A2724; color: #9C6A65; cursor: default; }
+
+  /* Improvement: plan warning */
+  .warn { display: none; margin-top: 16px; border: 1px solid #7A5A1E; background: #2A2213; border-radius: 12px; padding: 14px 16px; }
+  .impr .warn { display: block; }
+  .warn .wt { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; color: #F5DFA8; font-weight: 600; line-height: 1.4; }
+  .warn ul { margin: 8px 0 0 30px; }
+  .warn li { font-size: 14px; color: #E2D3B0; line-height: 1.45; }
+  .warn li + li { margin-top: 3px; }
+  .warn .links { display: flex; gap: 10px; margin: 12px 0 0 30px; flex-wrap: wrap; }
+  .warn .links button { height: 34px; border-radius: 9px; border: 1px solid #8E7440; background: #3A2F18; color: #F5DFA8; font-size: 13.5px; font-weight: 600; padding: 0 12px; cursor: pointer; }
+  .ack { display: none; align-items: flex-start; gap: 10px; margin-top: 16px; font-size: 14.5px; color: #DAD6DE; line-height: 1.4; cursor: pointer; }
+  .impr .ack { display: flex; }
+  .ack input { width: 18px; height: 18px; margin-top: 1px; accent-color: #A9473F; flex: none; }
+  .impr .lbl.n::before { content: "Step 2: "; color: #8E8A93; }
+  .impr .ack.n span::before { content: "Step 1: "; color: #8E8A93; }
+
+  /* Callouts on the window */
+  .callout { position: absolute; z-index: 12; max-width: 270px; font-size: 13px; line-height: 1.4; color: #fff; border-radius: 10px; padding: 9px 12px; box-shadow: 0 6px 16px rgba(0,0,0,.35); display: none; }
+  .callout.show { display: block; }
+  .callout.red { background: #B3261E; }
+  .callout.green { background: #1E7A46; }
+
+  /* Result after Delete */
+  .done { position: absolute; inset: 0; background: #141414; z-index: 20; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; }
+  .done.show { display: flex; }
+  .done h2 { font-size: 30px; font-weight: 400; }
+  .done p { color: #B8B4BD; margin-top: 10px; font-size: 15.5px; line-height: 1.5; max-width: 520px; }
+  .done .bad { margin-top: 18px; background: #3A1714; border: 1px solid #A9473F; color: #F3B7B0; border-radius: 12px; padding: 12px 16px; font-size: 14.5px; max-width: 520px; line-height: 1.45; }
+  .done .reset { margin-top: 22px; }
+
+  /* Info sheet */
+  .sheet-scrim { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 60; display: none; }
+  .sheet-scrim.show { display: block; }
+  .sheet { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); width: min(560px, 100%); z-index: 61; max-height: 88vh; overflow-y: auto; background: #fff; color: #1C1B1F; border-radius: 20px 20px 0 0; padding: 18px 20px 20px; display: none; }
+  .sheet.show { display: block; animation: up .2s ease-out; }
+  @keyframes up { from { transform: translate(-50%, 30px); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
+  .sheet h3 { font-size: 18px; font-weight: 700; padding-right: 40px; line-height: 1.3; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .tag { font-size: 11.5px; font-weight: 700; border-radius: 10px; padding: 2px 9px; background: #EFEDF2; color: #49454F; }
+  .tag.red { background: #FBE3E1; color: #B3261E; }
+  .tag.green { background: #DDF3E5; color: #1E7A46; }
+  .sheet h4 { font-size: 14px; font-weight: 700; margin-top: 14px; }
+  .sheet li { font-size: 13.5px; line-height: 1.45; color: #3D3A42; }
+  .sheet ol, .sheet ul { margin: 6px 0 0 18px; }
+  .sheet li + li { margin-top: 4px; }
+  .sheet .x { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #F1EFF3; cursor: pointer; display: grid; place-items: center; }
+  .sheet .rowb { display: flex; gap: 8px; margin-top: 14px; }
+  .sheet .rowb button { flex: 1; height: 44px; border-radius: 10px; border: 1.5px solid #1C1B1F; background: #fff; color: #1C1B1F; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .sheet .rowb button.go { background: #1C1B1F; color: #fff; }
+
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 10px); z-index: 70; background: #F1EFF3; color: #1C1B1F; padding: 11px 16px; border-radius: 10px; font-size: 14px; opacity: 0; transition: .2s; pointer-events: none; max-width: 90vw; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+  <div class="controls">
+    <button class="modebtn issue" id="m-issue" aria-pressed="true" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M20 8h-2.8a6 6 0 0 0-1.8-2l1.6-1.6-1.4-1.4-2.2 2.2a6 6 0 0 0-2.8 0L8.4 3 7 4.4 8.6 6a6 6 0 0 0-1.8 2H4v2h2.1a6 6 0 0 0 0 2H4v2h2.8a6 6 0 0 0 10.4 0H20v-2h-2.1a6 6 0 0 0 0-2H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/></svg>
+      Issue</button>
+    <button class="modebtn impr" id="m-impr" aria-pressed="false" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
+      Improvement</button>
+  </div>
+  <div class="banner issue" id="banner">Issue: how the desktop app works today</div>
+
+  <div class="fitbox" id="fitbox"><div class="stage" id="stage"><div class="win" id="win">
+    <aside class="side">
+      <h6>SETTINGS</h6>
+      <button class="nav proto" data-name="General"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CFCCD3" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>General</button>
+      <button class="nav proto" data-name="System"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CFCCD3" stroke-width="1.8"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>System</button>
+      <button class="nav proto" data-name="Notetaker"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CFCCD3" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" fill="#CFCCD3"/></svg>Notetaker</button>
+      <button class="nav proto" data-name="Vibe coding"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CFCCD3" stroke-width="1.8" stroke-linecap="round"><path d="M9 3L7 21M17 3l-2 18M4 8h17M3 16h17"/></svg>Vibe coding</button>
+      <button class="nav proto" data-name="Experimental"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CFCCD3" stroke-width="1.8" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-6 11h16L14 9V3"/></svg>Experimental</button>
+      <button class="nav proto" data-name="Connectors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CFCCD3" stroke-width="1.8" stroke-linecap="round"><path d="M7 3v5a3 3 0 0 0 6 0V3M10 11v4a4 4 0 0 0 8 0v-3M18 12V9"/></svg>Connectors</button>
+      <button class="nav proto" data-name="MCP"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CFCCD3" stroke-width="1.8" stroke-linecap="round"><path d="M4 13l8-8a3 3 0 0 1 4 4l-8 8M9 18l7-7a3 3 0 0 1 4 4l-5 5"/></svg>MCP</button>
+      <hr>
+      <h6>ACCOUNT</h6>
+      <button class="nav active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3"/><path d="M6.5 18.5a7 7 0 0 1 11 0"/></svg>Account</button>
+      <button class="nav proto" data-name="Team"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CFCCD3" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 19a6 6 0 0 1 12 0M16 5a3 3 0 0 1 0 6M18 19a6 6 0 0 0-2-4.5"/></svg>Team</button>
+      <button class="nav proto" data-name="Plans and Billing"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CFCCD3" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>Plans and Billing</button>
+      <button class="nav proto" data-name="Data and Privacy"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CFCCD3" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Data and Privacy</button>
+      <div class="ver"><span>Flow v1.6.1337</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#77737C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"/><path d="M9.5 13.5l2 2 3.5-3.5"/></svg></div>
+    </aside>
+
+    <main class="main">
+      <h1 class="serif">Account</h1>
+      <div class="card">
+        <div class="row"><span>First name</span><span class="field">First name</span></div>
+        <div class="row"><span>Last name</span><span class="field">Last name</span></div>
+        <div class="row"><span>Email</span><span class="muted">you@example.com</span></div>
+        <div class="row"><span>Plan</span><span class="pro">Pro</span></div>
+        <div class="row"><span>Profile picture</span><span class="avatar"></span></div>
+      </div>
+      <div class="foot">
+        <button class="danger" id="open-del">Delete account</button>
+        <button class="save" aria-disabled="true">Save</button>
+      </div>
+    </main>
+
+    <div class="callout red" id="co-open" style="left:262px; top:540px">Start here: click Delete account to open the confirmation.</div>
+
+    <div class="scrim" id="scrim"></div>
+    <section class="dlg" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-t">
+      <h2 id="dlg-t">Are you sure you want to delete your account?</h2>
+      <button class="x" id="dlg-x" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" stroke="#ECEAEE" stroke-width="2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      <p>This will delete all your data, memory, and dictionary, locally and on our servers.</p>
+
+      <div class="warn" role="alert">
+        <div class="wt"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F5C451" stroke-width="2" stroke-linejoin="round" style="flex:none"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5" stroke-linecap="round"/></svg>
+          You have an active Pro plan. Deleting your account cancels it right away.</div>
+        <ul>
+          <li>No refund, not even for the unused part of your plan.</li>
+          <li>Your referral credits are deleted and cannot be recovered.</li>
+          <li>To get a refund, contact support before deleting. To keep Pro, just go back.</li>
+        </ul>
+        <div class="links"><button class="proto" data-name="Plans and Billing">Manage plan</button><button class="proto" data-name="Contact support">Contact support</button></div>
+      </div>
+
+      <label class="ack n" id="ack"><input type="checkbox" id="ack-cb"><span>I understand my Pro plan will be cancelled immediately with no refund.</span></label>
+
+      <label class="lbl n" for="confirm">Type "you@example.com" to confirm</label>
+      <input type="text" id="confirm" autocomplete="off" spellcheck="false" placeholder="you@example.com">
+      <div class="acts">
+        <button class="btn back" id="dlg-back">Back to account</button>
+        <button class="btn del" id="dlg-del" aria-disabled="true">Delete account</button>
+      </div>
+    </section>
+    <div class="callout red" id="co-dlg" style="left:290px; top:592px; max-width:540px">Bug: this user has an active Pro plan, but the dialog only mentions data, memory and dictionary. Nothing says the paid plan is cancelled with no refund.</div>
+    <div class="callout green" id="co-dlg2" style="left:8px; top:430px; max-width:204px">Fix: the plan, the no-refund rule and the lost referral credits are spelled out, with a way to manage the plan or contact support first. Delete needs both the tick and the email.</div>
+
+    <div class="done" id="done">
+      <h2 class="serif">Account deleted</h2>
+      <p>Your data, memory and dictionary were deleted.</p>
+      <div class="bad" id="done-bad">Your Pro plan was also cancelled immediately, with no refund, and your referral credits are gone. The dialog never said so.</div>
+      <button class="btn back reset" id="reset">Start again</button>
+    </div>
+  </div></div></div>
+
+  <div class="sheet-scrim" id="sheet-scrim"></div>
+  <section class="sheet" id="sh-issue" role="dialog" aria-modal="true" aria-labelledby="t-issue">
+    <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+    <h3 id="t-issue">Delete account says nothing about an active Pro plan</h3>
+    <div class="tags"><span class="tag red">Issue</span><span class="tag">Settings, Account</span><span class="tag">Desktop app v1.6.1337, MacBook Pro</span></div>
+    <h4>Steps to reproduce</h4>
+    <ol>
+      <li>Sign in with an account on an active Pro plan.</li>
+      <li>Open <b>Settings</b>, then <b>Account</b>, and click <b>Delete account</b>.</li>
+      <li>Read the confirmation dialog.</li>
+    </ol>
+    <h4>What happens</h4>
+    <ul>
+      <li>The dialog only says it will delete data, memory and dictionary, locally and on the servers.</li>
+      <li>It says nothing about the Pro plan. Wispr Flow's help docs say that deleting an account with an active subscription cancels it immediately with no refund, not even a prorated one, and that referral credits are permanently deleted.</li>
+      <li>A paying user can lose the rest of their plan without being told. As a Pro user, the tester felt anxious and unsure whether Pro would be lost.</li>
+    </ul>
+    <h4>What was expected</h4>
+    <ul>
+      <li>When the account has an active paid plan, the dialog says the plan is cancelled immediately with no refund, and that referral credits are lost.</li>
+      <li>It offers Manage plan and Contact support, so people can get a refund first or change their mind.</li>
+    </ul>
+    <div class="rowb"><button class="go" data-try>Try the issue</button></div>
+    <div class="rowb"><button data-close>Done</button></div>
+  </section>
+  <section class="sheet" id="sh-impr" role="dialog" aria-modal="true" aria-labelledby="t-impr">
+    <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+    <h3 id="t-impr">Warn about the Pro plan before deleting</h3>
+    <div class="tags"><span class="tag green">Improvement</span><span class="tag">Settings, Account</span><span class="tag">Desktop app, MacBook Pro</span></div>
+    <h4>What changes</h4>
+    <ul>
+      <li>For accounts with an active paid plan, an amber warning appears in the dialog: the plan is cancelled right away, there is no refund, and referral credits are deleted.</li>
+      <li><b>Manage plan</b> and <b>Contact support</b> buttons sit in the warning, so people can request a refund first.</li>
+      <li>A tick box, "I understand my Pro plan will be cancelled immediately with no refund", must be ticked as well as typing the email before <b>Delete account</b> turns on.</li>
+      <li>Accounts on the free plan see the dialog as it is today.</li>
+    </ul>
+    <h4>Why it is better</h4>
+    <ul>
+      <li>No paying user loses money by surprise.</li>
+      <li>It matches what the help docs already say, inside the product, at the moment it matters.</li>
+      <li>It lowers support load from refund requests after accidental deletions.</li>
+    </ul>
+    <div class="rowb"><button class="go" data-try>Try the improvement</button></div>
+    <div class="rowb"><button data-close>Done</button></div>
+  </section>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const EMAIL = 'you@example.com';
+  let mode = 'issue';
+  function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 3200); }
+
+  // Scale the 1000 x 660 window to the screen
+  function fit() {
+    const avail = Math.min(window.innerWidth - 20, 1000);
+    const s = avail / 1000;
+    $('stage').style.transform = 'scale(' + s + ')';
+    $('fitbox').style.height = (660 * s) + 'px';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  function canDelete() {
+    const typed = $('confirm').value.trim().toLowerCase() === EMAIL;
+    return mode === 'issue' ? typed : typed && $('ack-cb').checked;
+  }
+  function refresh() {
+    $('dlg-del').setAttribute('aria-disabled', !canDelete());
+    const open = $('dlg').classList.contains('show');
+    $('co-open').classList.toggle('show', !open && !$('done').classList.contains('show'));
+    $('co-dlg').classList.toggle('show', open && mode === 'issue');
+    $('co-dlg2').classList.toggle('show', open && mode === 'impr');
+  }
+  function openDlg() {
+    $('confirm').value = ''; $('ack-cb').checked = false;
+    $('dlg').classList.add('show'); $('scrim').classList.add('show');
+    refresh();
+    (mode === 'impr' ? $('ack-cb') : $('confirm')).focus({ preventScroll: true });
+  }
+  function closeDlg() { $('dlg').classList.remove('show'); $('scrim').classList.remove('show'); refresh(); }
+  $('open-del').addEventListener('click', openDlg);
+  $('dlg-x').addEventListener('click', closeDlg);
+  $('dlg-back').addEventListener('click', closeDlg);
+  $('scrim').addEventListener('click', closeDlg);
+  $('confirm').addEventListener('input', refresh);
+  $('ack-cb').addEventListener('change', refresh);
+  ['mousedown', 'pointerdown'].forEach(ev => $('dlg-del').addEventListener(ev, e => { if (!canDelete()) e.preventDefault(); }));
+  $('dlg-del').addEventListener('click', () => {
+    if (!canDelete()) return;
+    closeDlg();
+    $('done-bad').textContent = mode === 'issue'
+      ? 'Your Pro plan was also cancelled immediately, with no refund, and your referral credits are gone. The dialog never said so.'
+      : 'Your Pro plan was cancelled with no refund, as the dialog clearly warned and you confirmed.';
+    $('done').classList.add('show'); refresh();
+    toast('Prototype only: nothing was deleted.');
+  });
+  $('reset').addEventListener('click', () => { $('done').classList.remove('show'); refresh(); });
+
+  // Issue / Improvement
+  function setMode(m) {
+    mode = m;
+    $('m-issue').setAttribute('aria-pressed', m === 'issue');
+    $('m-impr').setAttribute('aria-pressed', m === 'impr');
+    $('banner').className = 'banner ' + m;
+    $('banner').textContent = m === 'issue' ? 'Issue: how the desktop app works today' : 'Improvement: warn about the Pro plan before deleting';
+    $('dlg').classList.toggle('impr', m === 'impr');
+    $('done').classList.remove('show'); $('toast').classList.remove('show');
+    closeDlg();
+  }
+  let openSheet = null;
+  function showSheet(id) {
+    closeSheet(); openSheet = $(id); openSheet.classList.add('show'); $('sheet-scrim').classList.add('show');
+    openSheet.scrollTop = 0; openSheet.querySelector('.x').focus({ preventScroll: true });
+  }
+  function closeSheet() { if (openSheet) openSheet.classList.remove('show'); $('sheet-scrim').classList.remove('show'); openSheet = null; }
+  $('m-issue').addEventListener('click', () => { setMode('issue'); showSheet('sh-issue'); });
+  $('m-impr').addEventListener('click', () => { setMode('impr'); showSheet('sh-impr'); });
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheet));
+  $('sheet-scrim').addEventListener('click', closeSheet);
+  document.querySelectorAll('[data-try]').forEach(b => b.addEventListener('click', () => { closeSheet(); openDlg(); }));
+  document.querySelectorAll('.proto').forEach(el => el.addEventListener('click', () =>
+    toast(`This is just a prototype of Delete account, so ${el.dataset.name} is disabled.`)));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (openSheet) closeSheet(); else closeDlg(); } });
+
+  setMode('issue');
+})();
+</script>
+</body>
+</html>
