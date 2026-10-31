@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<title>Stop at the Limit: Maximum Length in Add Word and Every Form</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #1C1B1F; --muted: #6F6B75; --bg: #EDEDF0; --purple: #6B2F8F; --pink: #E0569A; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { font-family: "Figtree", system-ui, sans-serif; color: var(--ink); background: #E9E6EE; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 12px; }
+  button, input { font-family: inherit; color: inherit; -webkit-appearance: none; appearance: none; }
+
+  .controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; flex: none; }
+  .modebtn { border: 2px solid transparent; font-size: 14px; font-weight: 700; padding: 8px 16px; border-radius: 20px; cursor: pointer; display: flex; gap: 8px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.2); color: #fff; }
+  .modebtn.issue { background: #B3261E; }
+  .modebtn.impr { background: #1E7A46; }
+  .modebtn.app { background: #fff; color: var(--ink); border-color: #CFC9D6; }
+  .modebtn[aria-pressed="false"] { opacity: .55; box-shadow: none; }
+  .modebtn[aria-pressed="true"] { border-color: #1C1B1F; }
+
+  .phone { width: 390px; height: 844px; background: var(--bg); border: 10px solid #111; border-radius: 44px; box-shadow: 0 30px 60px rgba(0,0,0,.25); position: relative; overflow: hidden; display: flex; flex-direction: column; flex: none; }
+  @media (max-width: 500px) {
+    body { padding: 8px 0 0; gap: 8px; justify-content: flex-start; height: 100dvh; }
+    .phone { width: 100%; height: auto; flex: 1; min-height: 0; border: 0; border-radius: 0; box-shadow: none; }
+    .status, .navbar { display: none !important; }
+  }
+  .status { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 26px; font: 500 14px "Roboto", sans-serif; color: #333; }
+  .bars { display: flex; gap: 2px; align-items: flex-end; }
+  .bars i { display: block; width: 3px; background: #333; border-radius: 1px; }
+  .mode-banner { flex: none; text-align: center; font-size: 13px; font-weight: 700; padding: 6px 10px; color: #fff; }
+  .mode-banner.issue { background: #B3261E; }
+  .mode-banner.impr { background: #1E7A46; }
+
+  .top { height: 58px; flex: none; display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; padding: 0 10px; }
+  .brand { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 26px; font-weight: 800; letter-spacing: -.5px; }
+  .icon-btn { width: 44px; height: 44px; border: 0; background: none; border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
+  .page { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 16px 90px; position: relative; }
+  .search { display: flex; align-items: center; gap: 14px; height: 52px; border: 2px solid #CFC9D6; border-radius: 10px; background: #fff; padding: 0 14px; color: #B9B4C0; font-size: 18px; margin: 10px 0 18px; }
+  .list { background: #fff; border-radius: 22px; overflow: hidden; }
+  .item { padding: 18px 20px; font-size: 18px; border-bottom: 1px solid #ECEAEF; word-break: break-word; }
+  .item:last-child { border-bottom: 0; }
+  .item.new { animation: flash 1.2s ease-out; }
+  @keyframes flash { from { background: #F3E7FB; } to { background: #fff; } }
+  .fab { position: absolute; right: 18px; bottom: 96px; width: 56px; height: 56px; border-radius: 50%; border: 0; background: #1C1B1F; color: #fff; display: grid; place-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,.3); z-index: 5; }
+  .tabs { flex: none; display: flex; justify-content: space-around; padding: 8px 4px 10px; background: var(--bg); }
+  .tab { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 14px; color: #6F6B75; cursor: pointer; min-width: 80px; }
+  .tab .ic { width: 58px; height: 32px; border-radius: 16px; display: grid; place-items: center; }
+  .tab.active { color: var(--ink); } .tab.active .ic { background: #DCDADF; }
+  .tab.off { color: #B5B1BA; cursor: not-allowed; }
+  .navbar { height: 44px; flex: none; display: flex; justify-content: space-around; align-items: center; background: #fff; }
+
+  /* Add word dialog, styled like the app */
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 40; display: none; }
+  .scrim.show { display: block; }
+  .dialog { position: absolute; left: 22px; right: 22px; top: 280px; z-index: 41; background: #fff; border-radius: 28px; padding: 26px 24px 18px; display: none; font-family: "Roboto", system-ui, sans-serif; }
+  .dialog.show { display: block; animation: pop .16s ease-out; }
+  @keyframes pop { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+  .dialog h3 { font-size: 24px; font-weight: 400; margin-bottom: 22px; }
+  .fwrap { position: relative; }
+  /* As in the app: empty field has no fill and a thin light line; once typing, it gets the dark fill */
+  .f1 { width: 100%; height: 58px; border: 0; border-bottom: 1.5px solid #D3DADD; background: transparent; color: #1C1B1F; border-radius: 6px 6px 0 0; padding: 0 16px; font-family: "Figtree", "Roboto", sans-serif; font-size: 17px; outline: none; }
+  .f1::placeholder { color: #85818B; }
+  .f1.filled { background: #35343B; color: #EDEBEF; border-bottom: 2px solid #8C8792; }
+  .f1.filled:focus { border-bottom-color: #C99BE6; }
+  .dialog.err .f1 { border-bottom-color: var(--pink); }
+  .sub { display: flex; justify-content: space-between; gap: 10px; margin-top: 7px; padding: 0 4px; min-height: 20px; font-size: 14px; line-height: 1.35; }
+  .msg { color: var(--muted); }
+  .msg.err { color: var(--pink); font-size: 16px; }
+  .msg.limit { color: var(--purple); font-weight: 500; }
+  .count { color: var(--muted); font-variant-numeric: tabular-nums; flex: none; display: none; }
+  .impr-on .count { display: block; }
+  .count.near { color: #B26A00; } .count.full { color: var(--purple); font-weight: 700; }
+  .acts { display: flex; justify-content: flex-end; gap: 6px; margin-top: 22px; }
+  .tbtn { border: 0; background: none; font-family: "Roboto", sans-serif; font-size: 17px; font-weight: 500; color: #1C1B1F; padding: 10px 16px; border-radius: 20px; cursor: pointer; }
+  .tbtn.add { color: var(--purple); }
+  .tbtn.add[aria-disabled="true"] { color: #8A8590; cursor: default; }
+  .tbtn:hover { background: rgba(0,0,0,.05); }
+  .testrow { display: flex; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed #DDD8E3; font-family: "Figtree", sans-serif; flex-wrap: wrap; }
+  .testrow span { font-size: 12px; color: var(--muted); width: 100%; }
+  .testrow button { border: 1.5px solid #CFC9D6; background: #FAF8FC; border-radius: 14px; font-size: 12.5px; font-weight: 600; padding: 6px 10px; cursor: pointer; }
+
+  .callout { position: absolute; left: 22px; right: 22px; z-index: 42; font-size: 13px; line-height: 1.4; color: #fff; border-radius: 10px; padding: 9px 12px; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; }
+  .callout.show { display: block; }
+  .callout.red { background: #B3261E; } .callout.green { background: #1E7A46; }
+
+  /* Info sheets */
+  .sheet-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 60; display: none; }
+  .sheet-scrim.show { display: block; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 61; max-height: 92%; overflow-y: auto; background: #fff; border-radius: 20px 20px 0 0; padding: 16px 18px 18px; display: none; box-shadow: 0 -10px 30px rgba(0,0,0,.2); }
+  .sheet.show { display: block; animation: up .2s ease-out; }
+  @keyframes up { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .sheet h3 { font-size: 18px; font-weight: 700; padding-right: 40px; line-height: 1.3; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .tag { font-size: 11.5px; font-weight: 700; border-radius: 10px; padding: 2px 9px; background: #EFEDF2; color: #49454F; }
+  .tag.red { background: #FBE3E1; color: #B3261E; } .tag.green { background: #DDF3E5; color: #1E7A46; } .tag.p { background: #F3E7FB; color: #5A2378; }
+  .sheet h4 { font-size: 14px; font-weight: 700; margin-top: 14px; }
+  .sheet li, .sheet p { font-size: 13.5px; line-height: 1.45; color: #3D3A42; }
+  .sheet ol, .sheet ul { margin: 6px 0 0 18px; }
+  .sheet li + li { margin-top: 4px; }
+  .sheet table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12.5px; }
+  .sheet th, .sheet td { text-align: left; padding: 6px 6px; border-bottom: 1px solid #ECEAEF; vertical-align: top; color: #3D3A42; }
+  .sheet th { font-size: 11.5px; color: var(--muted); font-weight: 700; }
+  .sheet .x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #F1EFF3; cursor: pointer; display: grid; place-items: center; }
+  .sheet .rowb { display: flex; gap: 8px; margin-top: 14px; }
+  .sheet .rowb button { flex: 1; height: 44px; border-radius: 10px; border: 1.5px solid #1C1B1F; background: #fff; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .sheet .rowb button.go { background: #1C1B1F; color: #fff; }
+  .toast { position: absolute; left: 14px; right: 14px; bottom: 120px; z-index: 70; background: #2B2930; color: #fff; padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.4; opacity: 0; transform: translateY(10px); transition: .2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: none; }
+
+  /* Phones: the keyboard shrinks the screen, so keep the dialog at the top and compact,
+     and hide extras while typing so the field and its message stay visible. */
+  @media (max-width: 500px) {
+    .dialog { top: 8px; left: 12px; right: 12px; padding: 16px 18px 10px; border-radius: 22px; max-height: calc(100% - 16px); overflow-y: auto; }
+    .dialog h3 { font-size: 21px; margin-bottom: 12px; }
+    .f1 { height: 52px; }
+    .acts { margin-top: 8px; }
+    .dialog:focus-within .testrow { display: none; }
+    .callout { display: none !important; }
+  }
+</style>
+<style id="proto-links-css">
+  .proto-links { flex: none; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; margin: 14px auto 6px; padding: 0 10px 10px; font: 600 13px/1 "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .proto-links a { display: inline-flex; align-items: center; gap: 7px; background: #fff; color: #1C1B1F; border: 1px solid #DDD8E3; border-radius: 16px; padding: 7px 13px; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .proto-links a:hover { border-color: #6B2F8F; color: #6B2F8F; }
+  .proto-links a:focus-visible { outline: 2px solid #6B2F8F; outline-offset: 2px; }
+  @media (min-width: 501px) { body { flex-direction: column; justify-content: safe center; height: auto; min-height: 100%; } }
+</style>
+</head>
+<body>
+  <div class="controls">
+    <button class="modebtn issue" id="m-issue" aria-pressed="true" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M20 8h-2.8a6 6 0 0 0-1.8-2l1.6-1.6-1.4-1.4-2.2 2.2a6 6 0 0 0-2.8 0L8.4 3 7 4.4 8.6 6a6 6 0 0 0-1.8 2H4v2h2.1a6 6 0 0 0 0 2H4v2h2.8a6 6 0 0 0 10.4 0H20v-2h-2.1a6 6 0 0 0 0-2H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/></svg>
+      Issue</button>
+    <button class="modebtn impr" id="m-impr" aria-pressed="false" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
+      Improvement</button>
+    <button class="modebtn app" id="m-app" aria-haspopup="dialog">Apply across the app</button>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="status"><span id="clock">12:23</span>
+      <span class="bars"><i style="height:4px"></i><i style="height:7px"></i><i style="height:10px"></i><i style="height:13px"></i></span></div>
+    <div class="mode-banner issue" id="banner">Issue: no limit while typing, error only after Add</div>
+    <div class="top">
+      <button class="icon-btn proto" data-name="Menu" aria-label="Menu"><svg width="22" height="18" viewBox="0 0 22 18" fill="#1C1B1F"><rect y="1" width="22" height="3.4" rx="1.7"/><rect y="7.3" width="22" height="3.4" rx="1.7"/><rect y="13.6" width="22" height="3.4" rx="1.7"/></svg></button>
+      <div class="brand"><svg width="30" height="30" viewBox="0 0 30 30" stroke="#1C1B1F" stroke-width="3" stroke-linecap="round"><path d="M3 5v20M9 10v10M15 7v16M21 11v8M27 4v22"/></svg>Wispr Flow</div><span></span>
+    </div>
+    <section class="page">
+      <div class="search"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B9B4C0" stroke-width="2"><circle cx="10.5" cy="10.5" r="7"/><path d="M16 16l5 5"/></svg>Search</div>
+      <div class="list" id="list"></div>
+    </section>
+    <button class="fab" id="fab" aria-label="Add word"><svg width="22" height="22" viewBox="0 0 22 22" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M11 3v16M3 11h16"/></svg></button>
+    <nav class="tabs" aria-label="Main">
+      <button class="tab off" data-name="Home"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 7v11h-6v-7H9v7H3V10z"/></svg></span>Home</button>
+      <button class="tab active"><span class="ic"><svg width="22" height="24" viewBox="0 0 22 24" fill="currentColor"><path d="M4 1h10l6 6v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm7 6v8a1.5 1.5 0 0 1-3 0V9H6.5v6a3 3 0 0 0 6 0V7z"/></svg></span>Dictionary</button>
+      <button class="tab off" data-name="Style"><span class="ic"><svg width="26" height="22" viewBox="0 0 26 22" fill="currentColor"><path d="M1 2h12v3.5H9V20H5V5.5H1zM13 9h11v3h-3.5v8h-3.5v-8H13z"/></svg></span>Style</button>
+      <button class="tab off" data-name="Snippets"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="6" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M8.5 7.5L20 19M8.5 16.5L20 5"/></svg></span>Snippets</button>
+    </nav>
+
+    <div class="scrim" id="scrim"></div>
+    <div class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="d-title">
+      <h3 id="d-title">Add word</h3>
+      <div class="fwrap"><input class="f1" id="f1" aria-label="Word" aria-describedby="msg count" placeholder="Enter a word" autocomplete="off" spellcheck="false"></div>
+      <div class="sub"><span class="msg" id="msg" role="status" aria-live="polite"></span><span class="count" id="count">0/60</span></div>
+      <div class="acts">
+        <button class="tbtn" id="cancel">Cancel</button>
+        <button class="tbtn add" id="add" aria-disabled="true">Add</button>
+      </div>
+      <div class="testrow"><span>Test data (prototype only)</span>
+        <button id="t-type">Type 94 characters</button><button id="t-paste">Paste 94 characters</button></div>
+    </div>
+    <div class="callout red" id="callout" style="top:130px"></div>
+
+    <div class="sheet-scrim" id="sheet-scrim"></div>
+    <section class="sheet" id="sh-issue" role="dialog" aria-modal="true" aria-labelledby="t-issue">
+      <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      <h3 id="t-issue">Add word lets you type past the limit, then shows an error</h3>
+      <div class="tags"><span class="tag red">UX issue</span><span class="tag">Dictionary, Add word</span><span class="tag">Vivo 60e, Android</span></div>
+      <h4>Steps to reproduce</h4>
+      <ol><li>Open <b>Dictionary</b> and tap <b>+</b>.</li><li>Type or paste a long word or phrase, about 100 characters.</li><li>Tap <b>Add</b>.</li></ol>
+      <h4>What happens</h4>
+      <ul>
+        <li>Nothing stops or warns while typing past 60 characters, so it looks fine.</li>
+        <li>Only after tapping Add does the field turn pink with "Word is too long (max 60 characters)".</li>
+        <li>There is no count, so the user has to guess how much to delete.</li>
+      </ul>
+      <h4>What was expected</h4>
+      <ul>
+        <li>The field stops at 60 characters, with a live count such as 42/60, so the error can never happen.</li>
+      </ul>
+      <div class="rowb"><button class="go" data-try>Try the issue</button></div>
+      <div class="rowb"><button data-close>Done</button></div>
+    </section>
+    <section class="sheet" id="sh-impr" role="dialog" aria-modal="true" aria-labelledby="t-impr">
+      <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      <h3 id="t-impr">Stop at the limit instead of failing after</h3>
+      <div class="tags"><span class="tag green">Improvement</span><span class="tag">Dictionary, Add word</span></div>
+      <h4>What changes</h4>
+      <ul>
+        <li>The field accepts at most <b>60 characters</b>. Extra typing is simply not added.</li>
+        <li>A live counter, such as <b>42/60</b>, sits under the field. It turns amber near the limit and purple at 60.</li>
+        <li>At the limit, a calm note says "You've reached the 60-character limit." It is guidance, not an error.</li>
+        <li>Pasting longer text keeps the first 60 characters and says "Pasted text was cut to 60 characters."</li>
+        <li>Add stays disabled until there is text. Spaces at the start and end are trimmed.</li>
+      </ul>
+      <h4>Why it is better</h4>
+      <ul><li>The error state can no longer happen, so there is nothing to fix after the fact.</li><li>Users always know how much room is left.</li></ul>
+      <div class="rowb"><button class="go" data-try>Try the improvement</button></div>
+      <div class="rowb"><button data-close>Done</button></div>
+    </section>
+    <section class="sheet" id="sh-app" role="dialog" aria-modal="true" aria-labelledby="t-app">
+      <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      <h3 id="t-app">Apply this across the whole app</h3>
+      <div class="tags"><span class="tag p">Recommendation</span><span class="tag">All forms</span><span class="tag">Android, iOS, desktop, web</span></div>
+      <p style="margin-top:10px">The same problem appears wherever there is a text field with a limit. Validation should be <b>consistent</b> (same look and wording everywhere), <b>effective</b> (prevent the mistake, not just report it) and <b>useful</b> (say what to do).</p>
+      <h4>Forms to apply it to</h4>
+      <table>
+        <tr><th>Form</th><th>Fields</th></tr>
+        <tr><td>Dictionary, Add word</td><td>Word</td></tr>
+        <tr><td>Snippets, Add snippet</td><td>Snippet, Expansion (each with its own limit and counter)</td></tr>
+        <tr><td>Edit Profile</td><td>First name, Last name</td></tr>
+        <tr><td>Help, Report an issue</td><td>Description</td></tr>
+        <tr><td>Help, Share feedback</td><td>Feedback</td></tr>
+        <tr><td>Team and other settings</td><td>Names, emails and any free-text field</td></tr>
+      </table>
+      <h4>One validation pattern for every field</h4>
+      <ul>
+        <li><b>Show the limit up front:</b> a live counter (n/max) on every limited field.</li>
+        <li><b>Prevent, don't punish:</b> stop input at the limit, and cut pasted text with a short note.</li>
+        <li><b>Point to the right field:</b> any message sits under the field it is about, and only that field changes colour.</li>
+        <li><b>Same words and colours:</b> one style for guidance, one for real errors, used everywhere.</li>
+        <li><b>Clean the input:</b> trim spaces, collapse line breaks in one-line fields, and remove invisible characters.</li>
+        <li><b>Buttons tell the truth:</b> Save, Add and Send stay disabled until the form is valid and has changed.</li>
+        <li><b>Same rules on the server:</b> the app and the server share one source for limits, so they never disagree.</li>
+        <li><b>Accessible:</b> the counter and messages are announced by screen readers.</li>
+      </ul>
+      <div class="rowb"><button data-close>Done</button></div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="navbar" aria-hidden="true">
+      <svg width="22" height="16" viewBox="0 0 22 16" stroke="#888" stroke-width="2"><path d="M2 2h18M2 8h18M2 14h18"/></svg>
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="9"/></svg>
+      <svg width="14" height="22" viewBox="0 0 14 22" fill="none" stroke="#888" stroke-width="2"><path d="M12 2L3 11l9 9"/></svg>
+    </div>
+  </div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const MAX = 60;
+  const LONG = 'This is a very long dictionary word to test the maximum length and the error that it displays.';
+  const words = ['Wispr Flow', 'Santhosh Tuppad', 'Claude'];
+  let mode = 'issue';
+  const f1 = $('f1'), dialog = $('dialog'), add = $('add');
+  function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 3000); }
+  function renderList(newIdx) {
+    $('list').innerHTML = '';
+    words.forEach((w, i) => { const d = document.createElement('div'); d.className = 'item' + (i === newIdx ? ' new' : ''); d.textContent = w; $('list').appendChild(d); });
+  }
+  function msg(text, cls) { const m = $('msg'); m.textContent = text || ''; m.className = 'msg' + (cls ? ' ' + cls : ''); }
+  function callout(t, c) { const co = $('callout'); co.textContent = t; co.className = 'callout' + (t ? ' show ' + c : ''); }
+
+  function update() {
+    const n = f1.value.length;
+    add.setAttribute('aria-disabled', f1.value.trim() === '');
+    f1.classList.toggle('filled', f1.value.length > 0);
+    if (mode === 'impr') {
+      const c = $('count'); c.textContent = n + '/' + MAX;
+      c.className = 'count' + (n >= MAX ? ' full' : n >= MAX - 10 ? ' near' : '');
+      if (n >= MAX && !$('msg').dataset.paste) msg('You\'ve reached the 60-character limit.', 'limit');
+      else if (n < MAX) { msg(''); delete $('msg').dataset.paste; }
+      callout(n >= MAX ? 'Fix: the field stops at 60. Nothing more can be added, so the error never appears.' : '', 'green');
+    } else {
+      callout(n > MAX && !dialog.classList.contains('err') ? `Bug: ${n} characters typed and nothing warns you. Tap Add to see the error.` : '', 'red');
+    }
+  }
+  function applyMode() {
+    if (mode === 'impr') f1.setAttribute('maxlength', MAX); else f1.removeAttribute('maxlength');
+  }
+  function openAdd() {
+    f1.value = ''; dialog.classList.remove('err'); msg(''); delete $('msg').dataset.paste;
+    applyMode(); dialog.classList.add('show'); $('scrim').classList.add('show'); update();
+    f1.focus({ preventScroll: true });
+  }
+  function closeAdd() { dialog.classList.remove('show', 'err'); $('scrim').classList.remove('show'); callout(''); }
+  $('fab').addEventListener('click', openAdd);
+  $('cancel').addEventListener('click', closeAdd);
+  $('scrim').addEventListener('click', closeAdd);
+  f1.addEventListener('input', () => { if (mode === 'issue' && dialog.classList.contains('err')) { /* as in the app, the error stays */ } update(); });
+  // Improvement: pasting longer text keeps the first 60 characters and says so
+  f1.addEventListener('paste', e => {
+    if (mode !== 'impr') return;
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    e.preventDefault(); insertPasted(text);
+  });
+  function insertPasted(text) {
+    const s = f1.selectionStart ?? f1.value.length, en = f1.selectionEnd ?? f1.value.length;
+    const before = f1.value.slice(0, s), after = f1.value.slice(en);
+    const room = MAX - before.length - after.length;
+    const piece = text.replace(/[\r\n\t]+/g, ' ').slice(0, Math.max(0, room));
+    f1.value = before + piece + after;
+    f1.setSelectionRange(before.length + piece.length, before.length + piece.length);
+    if (piece.length < text.length) { $('msg').dataset.paste = '1'; msg('Pasted text was cut to 60 characters.', 'limit'); }
+    update();
+  }
+  ['mousedown', 'pointerdown'].forEach(ev => add.addEventListener(ev, e => { if (add.getAttribute('aria-disabled') === 'true') e.preventDefault(); }));
+  add.addEventListener('click', () => {
+    const w = f1.value.trim();
+    if (!w) return;
+    if (w.length > MAX) {   // only reachable in Issue mode
+      dialog.classList.add('err'); msg('Word is too long (max 60 characters)', 'err');
+      callout('Bug: the error only appears now, after Add, with no count of how much to remove.', 'red');
+      f1.focus({ preventScroll: true }); return;
+    }
+    words.unshift(w); renderList(0); closeAdd(); toast('Word added. This is a prototype only, so nothing was saved.');
+  });
+
+  // Test data buttons
+  $('t-type').addEventListener('click', async () => {
+    f1.value = ''; dialog.classList.remove('err'); msg(''); f1.focus({ preventScroll: true });
+    for (const ch of LONG) {
+      if (mode === 'impr' && f1.value.length >= MAX) { update(); break; }
+      f1.value += ch; update(); await new Promise(r => setTimeout(r, 18));
+    }
+    f1.scrollLeft = f1.scrollWidth;
+  });
+  $('t-paste').addEventListener('click', () => {
+    f1.value = ''; dialog.classList.remove('err'); msg(''); f1.focus({ preventScroll: true });
+    if (mode === 'impr') insertPasted(LONG); else { f1.value = LONG; update(); }
+    f1.scrollLeft = f1.scrollWidth;
+  });
+
+  // Modes and sheets
+  function setMode(m) {
+    mode = m; closeAdd();
+    $('m-issue').setAttribute('aria-pressed', m === 'issue'); $('m-impr').setAttribute('aria-pressed', m === 'impr');
+    $('banner').className = 'mode-banner ' + m;
+    $('banner').textContent = m === 'issue' ? 'Issue: no limit while typing, error only after Add' : 'Improvement: the field stops at 60 characters';
+    $('phone').classList.toggle('impr-on', m === 'impr');
+  }
+  let openSheet = null;
+  function showSheet(id) { closeSheet(); $('toast').classList.remove('show'); openSheet = $(id); openSheet.classList.add('show'); $('sheet-scrim').classList.add('show'); openSheet.scrollTop = 0; openSheet.querySelector('.x').focus({ preventScroll: true }); }
+  function closeSheet() { if (openSheet) openSheet.classList.remove('show'); $('sheet-scrim').classList.remove('show'); openSheet = null; }
+  $('m-issue').addEventListener('click', () => { setMode('issue'); showSheet('sh-issue'); });
+  $('m-impr').addEventListener('click', () => { setMode('impr'); showSheet('sh-impr'); });
+  $('m-app').addEventListener('click', () => { closeAdd(); showSheet('sh-app'); });
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheet));
+  $('sheet-scrim').addEventListener('click', closeSheet);
+  document.querySelectorAll('[data-try]').forEach(b => b.addEventListener('click', () => { closeSheet(); openAdd(); toast('Type a long word to try it. The test buttons in the dialog can fill one in for you.'); }));
+  document.querySelectorAll('.tab.off').forEach(t => t.addEventListener('click', () => toast(`Intentionally disabled: ${t.dataset.name} is not part of this prototype.`)));
+  document.querySelectorAll('.proto').forEach(el => el.addEventListener('click', () => toast(`This is just a prototype, so ${el.dataset.name} is disabled.`)));
+  document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (openSheet) closeSheet(); else if (dialog.classList.contains('show')) closeAdd(); });
+
+  renderList(); setMode('issue');
+  function tick() { const d = new Date(); $('clock').textContent = (d.getHours() % 12 || 12) + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  tick(); setInterval(tick, 30000);
+})();
+</script>
+<nav class="proto-links" aria-label="About this prototype">
+  <a href="https://github.com/ondsectest/apps/tree/main/Wispr%20Flow/Android%20Vivo%2060e/Stop%20at%20the%20Limit%20Maximum%20Length%20in%20Add%20Word%20and%20Every%20Form" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
+  <a href="https://www.linkedin.com/in/santhosh-tuppad-338b7412/" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="#0A66C2" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>Connect on LinkedIn</a>
+</nav>
+</body>
+</html>
