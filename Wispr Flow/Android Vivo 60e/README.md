@@ -18,7 +18,9 @@ UX prototypes and bugs found while testing the Wispr Flow Android app on a Vivo 
 | [Cursor Ready in Add Snippet](./Cursor%20Ready%20in%20Add%20Snippet) | Snippets: tapping + opens Add snippet with no cursor and no keyboard, so an extra tap is needed. The prototype has Issue and Improvement buttons to compare; with the improvement, the cursor is in the Snippet field and the keyboard is up, ready to type. |
 | [Save and Done Only When Languages Change](./Save%20and%20Done%20Only%20When%20Languages%20Change) | Settings, Languages: Save is enabled with nothing changed, and Done under Add more is enabled with no new language selected. The prototype has Issue and Improvement buttons; with the fix, Save and Done turn on only when something changed. |
 | [Stretched Words in Very Casual Style](./Stretched%20Words%20in%20Very%20Casual%20Style) | An improvement request with an animated GIF: in Very Casual or Excited style, saying "whaaaaaaaat" is typed as plain "What", so the tone is lost. |
+| [Two OFF Toggles, Two Colours](./Two%20OFF%20Toggles%20Two%20Colours) | A UI bug, reported with an animated GIF: in Settings, Data & Privacy, both toggles are off, but Dictation cloud storage has a light purple tint that looks on next to the grey one. The fix uses one grey for every off toggle and a lock icon for the locked one. |
 
-All prototypes are plain HTML, CSS and JavaScript in a single file, with no build step. Some findings, like Stretched Words in Very Casual Style, are reported with an animated GIF instead.
+All prototypes are plain HTML, CSS and JavaScript in a single file, with no build step. Some findings, like Stretched Words in Very Casual Style and Two OFF Toggles, Two Colours, are reported with an animated GIF instead.
 
 Prototypes by Santhosh Tuppad.
+
