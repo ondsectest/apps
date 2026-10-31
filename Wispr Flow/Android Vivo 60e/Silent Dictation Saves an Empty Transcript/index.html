@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Silent Dictation Saves an Empty Transcript</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=EB+Garamond:wght@400;500&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #1C1B1F; --muted: #85818B; --bg: #F6F6F7; --card: #EDECF0; --green: #2E7D4F; --purple: #6B2F8F; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { font-family: "Figtree", system-ui, sans-serif; color: var(--ink); background: #E9E6EE; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 12px; }
+  button, input { font-family: inherit; color: inherit; }
+  .serif { font-family: "EB Garamond", Georgia, serif; }
+
+  .controls { display: flex; justify-content: center; gap: 10px; flex: none; }
+  .modebtn { border: 2px solid transparent; font-size: 14px; font-weight: 700; padding: 8px 18px; border-radius: 20px; cursor: pointer; display: flex; gap: 8px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.2); color: #fff; }
+  .modebtn.issue { background: #B3261E; }
+  .modebtn.impr { background: #1E7A46; }
+  .modebtn[aria-pressed="false"] { opacity: .55; box-shadow: none; }
+  .modebtn[aria-pressed="true"] { border-color: #1C1B1F; }
+
+  .phone { width: 390px; height: 844px; background: #fff; border: 10px solid #111; border-radius: 44px; box-shadow: 0 30px 60px rgba(0,0,0,.25); position: relative; overflow: hidden; display: flex; flex-direction: column; flex: none; }
+  @media (max-width: 500px) {
+    body { padding: 8px 0 0; gap: 8px; justify-content: flex-start; height: 100dvh; }
+    .phone { width: 100%; height: auto; flex: 1; min-height: 0; border: 0; border-radius: 0; box-shadow: none; }
+    .status, .navbar { display: none !important; }
+  }
+  .status { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 26px; font: 500 14px "Roboto", sans-serif; color: #333; }
+  .bars { display: flex; gap: 2px; align-items: flex-end; }
+  .bars i { display: block; width: 3px; background: #333; border-radius: 1px; }
+  .mode-banner { flex: none; text-align: center; font-size: 13px; font-weight: 700; padding: 6px 10px; color: #fff; }
+  .mode-banner.issue { background: #B3261E; }
+  .mode-banner.impr { background: #1E7A46; }
+  .screen { flex: 1; min-height: 0; display: none; flex-direction: column; position: relative; }
+  .screen.active { display: flex; }
+
+  /* A fictional chat app where dictation happens */
+  .chead { flex: none; display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #F3F1F5; border-bottom: 1px solid #E2DFE6; }
+  .av { width: 38px; height: 38px; border-radius: 50%; background: #C9B6DA; display: grid; place-items: center; font-weight: 700; color: #4A2D63; }
+  .chead b { font-size: 16px; } .chead small { display: block; font-size: 12px; color: var(--muted); }
+  .msgs { flex: 1; min-height: 0; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; background: #FAF9FB; }
+  .msg { max-width: 75%; padding: 9px 12px; border-radius: 14px; font-size: 15px; line-height: 1.4; }
+  .msg.in { background: #fff; border: 1px solid #E5E2E9; align-self: flex-start; }
+  .msg.out { background: #E9DCFB; align-self: flex-end; }
+  .compose { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #fff; border-top: 1px solid #E5E2E9; }
+  .cinput { flex: 1; height: 42px; border: 1.5px solid #6B2F8F; border-radius: 21px; padding: 0 14px; display: flex; align-items: center; font-size: 15px; color: #ADA8B3; gap: 2px; }
+  .cinput .caret { width: 2px; height: 18px; background: #6B2F8F; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .send { width: 42px; height: 42px; border-radius: 50%; border: 0; background: #DCD6E2; display: grid; place-items: center; }
+  .kb { flex: none; height: 214px; background: #D7D9DF; padding: 8px 4px; display: flex; flex-direction: column; gap: 8px; font-family: "Roboto", sans-serif; }
+  .kb .r { display: flex; justify-content: center; gap: 5px; }
+  .kb .k { width: 31px; height: 40px; background: #fff; border-radius: 6px; display: grid; place-items: center; font-size: 18px; box-shadow: 0 1px 0 rgba(0,0,0,.25); }
+  .kb .k.w { width: 48px; font-size: 12px; background: #AEB3BD; } .kb .k.sp { width: 170px; }
+
+  /* Flow Bubble and the dictation bar */
+  .bubble { position: absolute; right: 10px; bottom: 300px; width: 52px; height: 52px; border-radius: 50%; background: #1C1B1F; border: 0; display: grid; place-items: center; cursor: pointer; box-shadow: 0 6px 16px rgba(0,0,0,.3); z-index: 5; }
+  .bubble:focus-visible { outline: 3px solid #C99BE6; }
+  .dbar { position: absolute; left: 12px; right: 12px; bottom: 228px; height: 64px; background: #1C1B1F; border-radius: 32px; display: none; align-items: center; justify-content: space-between; padding: 0 10px; z-index: 6; color: #fff; box-shadow: 0 8px 20px rgba(0,0,0,.3); }
+  .dbar.show { display: flex; }
+  .dbar .rb { width: 44px; height: 44px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; }
+  .dbar .x { background: #3A3846; } .dbar .ok { background: #fff; }
+  .dbar .mid { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; }
+  .dbar .wave { display: flex; gap: 3px; align-items: center; height: 22px; }
+  .dbar .wave i { width: 4px; height: 4px; border-radius: 2px; background: #8E8A96; display: block; }
+  .dbar .t { font-variant-numeric: tabular-nums; color: #CFCCD3; }
+  .silent { font-size: 11.5px; color: #F5C451; font-weight: 700; }
+  .heard { position: absolute; left: 20px; right: 20px; bottom: 360px; z-index: 7; background: #fff; border: 1.5px solid #D9D5DE; border-radius: 14px; padding: 11px 14px; font-size: 14.5px; line-height: 1.4; box-shadow: 0 6px 18px rgba(0,0,0,.14); display: none; }
+  .heard.show { display: block; }
+  .heard b { display: block; font-size: 15px; margin-bottom: 2px; }
+  .openflow { position: absolute; left: 16px; bottom: 300px; z-index: 4; border: 0; background: #1C1B1F; color: #fff; font-weight: 700; font-size: 14px; padding: 10px 16px; border-radius: 20px; cursor: pointer; display: none; box-shadow: 0 6px 16px rgba(0,0,0,.25); }
+  .openflow.show { display: block; }
+
+  /* Wispr Flow Home */
+  #s-home { background: var(--bg); }
+  .top { height: 58px; flex: none; display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; padding: 0 10px; }
+  .brand { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 26px; font-weight: 800; letter-spacing: -.5px; }
+  .icon-btn { width: 44px; height: 44px; border: 0; background: none; border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
+  .scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 0 14px 16px; }
+  .stats { background: var(--card); border-radius: 24px; padding: 40px 20px 36px; text-align: center; margin-top: 6px; }
+  .stats .big { font-size: 44px; color: var(--green); line-height: 1; }
+  .stats p { font-size: 16px; margin-top: 10px; color: #2A2830; }
+  .stats p + p { margin-top: 4px; }
+  .dots { display: flex; justify-content: center; gap: 8px; margin: 12px 0 4px; }
+  .dots i { width: 8px; height: 8px; border-radius: 50%; background: #C9C6CE; } .dots i:first-child { background: #2A2830; }
+  .day h2 { font-size: 34px; font-weight: 400; margin: 18px 4px 10px; }
+  .group { background: var(--card); border-radius: 22px; overflow: hidden; }
+  .tx { padding: 16px 16px 14px; position: relative; }
+  .tx + .tx { border-top: 1px solid #DAD7DF; }
+  .tx .t { font-size: 17px; line-height: 1.45; color: #2A2830; }
+  .tx .tm { font-size: 14.5px; color: #9D99A3; margin-top: 8px; }
+  .tx .t:empty + .tm { margin-top: 18px; }
+  .tx.empty-new { outline: 2.5px solid #B3261E; outline-offset: -2px; border-radius: 0; }
+  .tx .bugtag { position: absolute; right: 14px; top: 12px; font-size: 11.5px; font-weight: 700; color: #fff; background: #B3261E; border-radius: 8px; padding: 2px 8px; }
+  .acts { display: flex; gap: 10px; margin-top: 12px; align-items: center; }
+  .pill { height: 40px; border: 1.5px solid #8C8792; border-radius: 20px; background: none; display: inline-flex; align-items: center; gap: 8px; padding: 0 16px; font-size: 15px; cursor: pointer; }
+  .pill.more { width: 40px; padding: 0; justify-content: center; margin-left: auto; }
+  .tabs { flex: none; display: flex; justify-content: space-around; padding: 8px 4px 10px; background: var(--bg); }
+  .tab { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 14px; color: #6F6B75; cursor: pointer; min-width: 80px; }
+  .tab .ic { width: 58px; height: 32px; border-radius: 16px; display: grid; place-items: center; }
+  .tab.active { color: var(--ink); } .tab.active .ic { background: #DCDADF; }
+  .tab.off { color: #B5B1BA; }
+  .back-chat { position: absolute; right: 8px; top: 13px; z-index: 4; border: 1.5px solid #8C8792; background: #fff; border-radius: 16px; font-size: 13px; font-weight: 600; padding: 6px 12px; cursor: pointer; }
+  .navbar { height: 44px; flex: none; display: flex; justify-content: space-around; align-items: center; background: #fff; }
+
+  .callout { position: absolute; left: 16px; right: 16px; z-index: 8; font-size: 13px; line-height: 1.4; color: #fff; border-radius: 10px; padding: 9px 12px; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; }
+  .callout.show { display: block; }
+  .callout.red { background: #B3261E; } .callout.green { background: #1E7A46; }
+
+  /* Info sheets */
+  .sheet-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 60; display: none; }
+  .sheet-scrim.show { display: block; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 61; max-height: 90%; overflow-y: auto; background: #fff; border-radius: 20px 20px 0 0; padding: 16px 18px 18px; display: none; box-shadow: 0 -10px 30px rgba(0,0,0,.2); }
+  .sheet.show { display: block; animation: up .2s ease-out; }
+  @keyframes up { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .sheet h3 { font-size: 18px; font-weight: 700; padding-right: 40px; line-height: 1.3; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .tag { font-size: 11.5px; font-weight: 700; border-radius: 10px; padding: 2px 9px; background: #EFEDF2; color: #49454F; }
+  .tag.red { background: #FBE3E1; color: #B3261E; } .tag.green { background: #DDF3E5; color: #1E7A46; }
+  .sheet h4 { font-size: 14px; font-weight: 700; margin-top: 14px; }
+  .sheet li { font-size: 13.5px; line-height: 1.45; color: #3D3A42; }
+  .sheet ol, .sheet ul { margin: 6px 0 0 18px; }
+  .sheet li + li { margin-top: 4px; }
+  .sheet .x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #F1EFF3; cursor: pointer; display: grid; place-items: center; }
+  .sheet .rowb { display: flex; gap: 8px; margin-top: 14px; }
+  .sheet .rowb button { flex: 1; height: 44px; border-radius: 10px; border: 1.5px solid #1C1B1F; background: #fff; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .sheet .rowb button.go { background: #1C1B1F; color: #fff; }
+  .toast { position: absolute; left: 14px; right: 14px; bottom: 100px; z-index: 70; background: #2B2930; color: #fff; padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.4; opacity: 0; transform: translateY(10px); transition: .2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: none; }
+</style>
+<style id="proto-links-css">
+  .proto-links { flex: none; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; margin: 14px auto 6px; padding: 0 10px 10px; font: 600 13px/1 "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .proto-links a { display: inline-flex; align-items: center; gap: 7px; background: #fff; color: #1C1B1F; border: 1px solid #DDD8E3; border-radius: 16px; padding: 7px 13px; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .proto-links a:hover { border-color: #6B2F8F; color: #6B2F8F; }
+  .proto-links a:focus-visible { outline: 2px solid #6B2F8F; outline-offset: 2px; }
+  @media (min-width: 501px) { body { flex-direction: column; justify-content: safe center; height: auto; min-height: 100%; } }
+</style>
+</head>
+<body>
+  <div class="controls">
+    <button class="modebtn issue" id="m-issue" aria-pressed="true" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M20 8h-2.8a6 6 0 0 0-1.8-2l1.6-1.6-1.4-1.4-2.2 2.2a6 6 0 0 0-2.8 0L8.4 3 7 4.4 8.6 6a6 6 0 0 0-1.8 2H4v2h2.1a6 6 0 0 0 0 2H4v2h2.8a6 6 0 0 0 10.4 0H20v-2h-2.1a6 6 0 0 0 0-2H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/></svg>
+      Issue</button>
+    <button class="modebtn impr" id="m-impr" aria-pressed="false" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
+      Improvement</button>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="status"><span id="clock">11:08</span>
+      <span class="bars"><i style="height:4px"></i><i style="height:7px"></i><i style="height:10px"></i><i style="height:13px"></i></span></div>
+    <div class="mode-banner issue" id="banner">Issue: an empty transcript is saved</div>
+
+    <!-- Chat app with the Flow Bubble -->
+    <section class="screen active" id="s-chat">
+      <div class="chead"><div class="av">R</div><div><b>Ravi</b><small>A sample chat app</small></div></div>
+      <div class="msgs">
+        <div class="msg in">Are we still on for tomorrow?</div>
+        <div class="msg out">Yes, 10 am works.</div>
+        <div class="msg in">Great, see you then!</div>
+      </div>
+      <button class="openflow" id="openflow">Open Wispr Flow to check history</button>
+      <div class="callout red" id="co-chat" style="top:150px"></div>
+      <button class="bubble" id="bubble" aria-label="Start dictation with the Flow Bubble"><svg width="24" height="24" viewBox="0 0 30 30" stroke="#fff" stroke-width="3.2" stroke-linecap="round"><path d="M4 6v18M10 10v10M15 7v16M20 11v8M26 5v20"/></svg></button>
+      <div class="heard" id="heard" role="status"><b>No speech detected</b>Nothing was typed, and nothing was saved to your history.</div>
+      <div class="dbar" id="dbar" role="group" aria-label="Dictation">
+        <button class="rb x" id="d-x" aria-label="Cancel dictation"><svg width="16" height="16" viewBox="0 0 16 16" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+        <div class="mid"><span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span><span class="t" id="timer">0:00</span><br><span class="silent">Silence: no voice</span></span></div>
+        <button class="rb ok" id="d-ok" aria-label="Finish dictation"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1C1B1F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L20 7"/></svg></button>
+      </div>
+      <div class="compose"><div class="cinput"><span class="caret"></span>Message</div>
+        <button class="send" aria-label="Send" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M3 20l18-8L3 4v6l12 2-12 2z"/></svg></button></div>
+      <div class="kb" aria-hidden="true">
+        <div class="r"><span class="k">q</span><span class="k">w</span><span class="k">e</span><span class="k">r</span><span class="k">t</span><span class="k">y</span><span class="k">u</span><span class="k">i</span><span class="k">o</span><span class="k">p</span></div>
+        <div class="r"><span class="k">a</span><span class="k">s</span><span class="k">d</span><span class="k">f</span><span class="k">g</span><span class="k">h</span><span class="k">j</span><span class="k">k</span><span class="k">l</span></div>
+        <div class="r"><span class="k w">&#8679;</span><span class="k">z</span><span class="k">x</span><span class="k">c</span><span class="k">v</span><span class="k">b</span><span class="k">n</span><span class="k">m</span><span class="k w">&#9003;</span></div>
+        <div class="r"><span class="k w">?123</span><span class="k">,</span><span class="k sp"></span><span class="k">.</span><span class="k w">&#8629;</span></div>
+      </div>
+    </section>
+
+    <!-- Wispr Flow Home -->
+    <section class="screen" id="s-home">
+      <div class="top">
+        <button class="icon-btn" aria-label="Menu"><svg width="22" height="18" viewBox="0 0 22 18" fill="#1C1B1F"><rect y="1" width="22" height="3.4" rx="1.7"/><rect y="7.3" width="22" height="3.4" rx="1.7"/><rect y="13.6" width="22" height="3.4" rx="1.7"/></svg></button>
+        <div class="brand"><svg width="30" height="30" viewBox="0 0 30 30" stroke="#1C1B1F" stroke-width="3" stroke-linecap="round"><path d="M3 5v20M9 10v10M15 7v16M21 11v8M27 4v22"/></svg>Wispr Flow</div><span></span>
+      </div>
+      <button class="back-chat" id="back-chat">&larr; Chat</button>
+      <div class="scroll" id="scroll"></div>
+      <div class="callout red" id="co-home" style="bottom:90px"></div>
+      <nav class="tabs" aria-label="Main">
+        <button class="tab active"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 7v11h-6v-7H9v7H3V10z"/></svg></span>Home</button>
+        <button class="tab off" data-name="Dictionary"><span class="ic"><svg width="22" height="24" viewBox="0 0 22 24" fill="currentColor"><path d="M4 1h10l6 6v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm7 6v8a1.5 1.5 0 0 1-3 0V9H6.5v6a3 3 0 0 0 6 0V7z"/></svg></span>Dictionary</button>
+        <button class="tab off" data-name="Style"><span class="ic"><svg width="26" height="22" viewBox="0 0 26 22" fill="currentColor"><path d="M1 2h12v3.5H9V20H5V5.5H1zM13 9h11v3h-3.5v8h-3.5v-8H13z"/></svg></span>Style</button>
+        <button class="tab off" data-name="Snippets"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="6" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M8.5 7.5L20 19M8.5 16.5L20 5"/></svg></span>Snippets</button>
+      </nav>
+    </section>
+
+    <div class="sheet-scrim" id="sheet-scrim"></div>
+    <section class="sheet" id="sh-issue" role="dialog" aria-modal="true" aria-labelledby="t-issue">
+      <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      <h3 id="t-issue">A dictation with no speech is saved as an empty transcript</h3>
+      <div class="tags"><span class="tag red">Bug</span><span class="tag">Dictation, Home history</span><span class="tag">Vivo 60e, Android</span></div>
+      <h4>Steps to reproduce</h4>
+      <ol>
+        <li>Start a dictation: tap the Flow Bubble on Android (a double press of fn on desktop behaves the same).</li>
+        <li>Do not speak. Wait 3 to 5 seconds.</li>
+        <li>Tap the <b>check mark</b> to finish.</li>
+        <li>Open Wispr Flow and look at <b>Home</b>.</li>
+      </ol>
+      <h4>What happens</h4>
+      <ul>
+        <li>Nothing is typed, which is correct.</li>
+        <li>But Home shows a new transcript card with only a time, Copy, Report and more. There is no text in it.</li>
+        <li>Repeating this fills the history with blank cards.</li>
+        <li>Copy on a blank card copies nothing.</li>
+      </ul>
+      <h4>What was expected</h4>
+      <ul>
+        <li>When no speech is detected, nothing is saved to history.</li>
+        <li>A short message says "No speech detected", so the user knows why nothing was typed.</li>
+      </ul>
+      <div class="rowb"><button class="go" data-try>Try the issue</button></div>
+      <div class="rowb"><button data-close>Done</button></div>
+    </section>
+    <section class="sheet" id="sh-impr" role="dialog" aria-modal="true" aria-labelledby="t-impr">
+      <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      <h3 id="t-impr">No speech, no transcript</h3>
+      <div class="tags"><span class="tag green">Proposed fix</span><span class="tag">Dictation, Home history</span></div>
+      <h4>What changes</h4>
+      <ul>
+        <li>When the check mark is tapped and no speech was detected, Wispr Flow shows "No speech detected. Nothing was typed, and nothing was saved to your history."</li>
+        <li>No transcript is added to Home. History stays clean.</li>
+        <li>Optionally, if blank transcripts already exist, they are hidden or cleaned up.</li>
+      </ul>
+      <h4>Why it is better</h4>
+      <ul>
+        <li>History only holds things that were actually said.</li>
+        <li>Clear feedback explains why nothing was typed, instead of leaving the user guessing.</li>
+        <li>No empty cards with Copy and Report buttons that do nothing useful.</li>
+      </ul>
+      <div class="rowb"><button class="go" data-try>Try the fix</button></div>
+      <div class="rowb"><button data-close>Done</button></div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="navbar" aria-hidden="true">
+      <svg width="22" height="16" viewBox="0 0 22 16" stroke="#888" stroke-width="2"><path d="M2 2h18M2 8h18M2 14h18"/></svg>
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="9"/></svg>
+      <svg width="14" height="22" viewBox="0 0 14 22" fill="none" stroke="#888" stroke-width="2"><path d="M12 2L3 11l9 9"/></svg>
+    </div>
+  </div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  let mode = 'issue', timerId = null, secs = 0;
+  const HIST = [
+    { t: 'Are we meeting at the cafe or at the office tomorrow?', tm: '10:41pm' },
+    { t: 'Please share the slides before lunch.', tm: '9:15pm' },
+  ];
+  let blanks = [];   // empty transcripts added in Issue mode
+  function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 3000); }
+  function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id)); }
+  function nowLabel() { const d = new Date(); let h = d.getHours() % 12 || 12; return h + ':' + String(d.getMinutes()).padStart(2, '0') + (d.getHours() < 12 ? 'am' : 'pm'); }
+
+  const ICON_COPY = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2A2830" stroke-width="1.8"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2"/></svg>';
+  const ICON_FLAG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2A2830" stroke-width="1.8" stroke-linejoin="round"><path d="M5 21V4h10l-1 3h5v8h-8l1-3H5"/></svg>';
+  const ICON_MORE = '<svg width="4" height="18" viewBox="0 0 4 18" fill="#2A2830"><circle cx="2" cy="2" r="2"/><circle cx="2" cy="9" r="2"/><circle cx="2" cy="16" r="2"/></svg>';
+  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function renderHome() {
+    const items = [...blanks.map(b => ({ t: '', tm: b, blank: true })).reverse(), ...HIST];
+    let h = '<div class="stats"><div class="big serif">81,956 words</div><p>spoken so far</p><p>You\'ve written 2 podcast seasons!</p></div><div class="dots"><i></i><i></i><i></i><i></i></div>';
+    h += '<div class="day"><h2 class="serif">Today</h2><div class="group">';
+    items.forEach(x => {
+      h += `<div class="tx${x.blank ? ' empty-new' : ''}">${x.blank ? '<span class="bugtag">Empty</span>' : ''}<div class="t">${esc(x.t)}</div><div class="tm">${x.tm}</div>
+        <div class="acts"><button class="pill" data-a="${x.blank ? 'blankcopy' : 'copy'}">${ICON_COPY}Copy</button><button class="pill" data-a="Report">${ICON_FLAG}Report</button><button class="pill more" data-a="More" aria-label="More">${ICON_MORE}</button></div></div>`;
+    });
+    h += '</div></div>';
+    $('scroll').innerHTML = h;
+    $('scroll').querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => {
+      const a = b.dataset.a;
+      toast(a === 'blankcopy' ? 'Copied... nothing. This transcript is empty.' : a === 'copy' ? 'Copied. This is a prototype only.' : `This is just a prototype, so ${a} is disabled.`);
+    }));
+    const co = $('co-home');
+    if (mode === 'issue' && blanks.length) { co.className = 'callout red show'; co.textContent = `Bug: ${blanks.length} empty transcript${blanks.length > 1 ? 's were' : ' was'} saved, with only a time, Copy, Report and more.`; }
+    else if (mode === 'impr') { co.className = 'callout green show'; co.textContent = 'Fix: silent dictations are not saved. History only shows what was actually said.'; }
+    else co.className = 'callout';
+  }
+
+  // Dictation
+  function startDictation() {
+    $('heard').classList.remove('show'); $('openflow').classList.remove('show'); chatCallout('');
+    secs = 0; $('timer').textContent = '0:00'; $('dbar').classList.add('show'); $('bubble').style.display = 'none';
+    clearInterval(timerId); timerId = setInterval(() => { secs++; $('timer').textContent = '0:' + String(secs).padStart(2, '0'); }, 1000);
+    chatCallout('Listening, but nobody speaks. Wait a few seconds, then tap the check mark.', mode === 'issue' ? 'red' : 'green');
+  }
+  function stopDictation(ok) {
+    clearInterval(timerId); $('dbar').classList.remove('show'); $('bubble').style.display = '';
+    if (!ok) { chatCallout(''); toast('Dictation cancelled.'); return; }
+    if (mode === 'issue') {
+      blanks.push(nowLabel());
+      chatCallout('Nothing was typed, and there was no message. Now check Wispr Flow\'s history.', 'red');
+    } else {
+      $('heard').classList.add('show');
+      chatCallout('');
+      setTimeout(() => $('heard').classList.remove('show'), 4500);
+    }
+    $('openflow').classList.add('show');
+  }
+  function chatCallout(t, c) { const co = $('co-chat'); co.textContent = t; co.className = 'callout' + (t ? ' show ' + c : ''); }
+  $('bubble').addEventListener('click', startDictation);
+  $('d-ok').addEventListener('click', () => stopDictation(true));
+  $('d-x').addEventListener('click', () => stopDictation(false));
+  $('openflow').addEventListener('click', () => { renderHome(); show('s-home'); $('scroll').scrollTop = 0; });
+  $('back-chat').addEventListener('click', () => { show('s-chat'); $('openflow').classList.remove('show'); chatCallout('Tap the Flow Bubble on the right to try again.', mode === 'issue' ? 'red' : 'green'); });
+
+  // Issue / Improvement
+  function setMode(m) {
+    mode = m; blanks = []; clearInterval(timerId);
+    $('m-issue').setAttribute('aria-pressed', m === 'issue'); $('m-impr').setAttribute('aria-pressed', m === 'impr');
+    $('banner').className = 'mode-banner ' + m;
+    $('banner').textContent = m === 'issue' ? 'Issue: an empty transcript is saved' : 'Proposed fix: no speech, no transcript';
+    $('dbar').classList.remove('show'); $('heard').classList.remove('show'); $('openflow').classList.remove('show'); $('bubble').style.display = '';
+    show('s-chat'); chatCallout('Tap the Flow Bubble on the right to start dictating. Do not speak.', m === 'issue' ? 'red' : 'green');
+  }
+  let openSheet = null;
+  function showSheet(id) { closeSheet(); $('toast').classList.remove('show'); openSheet = $(id); openSheet.classList.add('show'); $('sheet-scrim').classList.add('show'); openSheet.scrollTop = 0; openSheet.querySelector('.x').focus({ preventScroll: true }); }
+  function closeSheet() { if (openSheet) openSheet.classList.remove('show'); $('sheet-scrim').classList.remove('show'); openSheet = null; }
+  $('m-issue').addEventListener('click', () => { setMode('issue'); showSheet('sh-issue'); });
+  $('m-impr').addEventListener('click', () => { setMode('impr'); showSheet('sh-impr'); });
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheet));
+  $('sheet-scrim').addEventListener('click', closeSheet);
+  document.querySelectorAll('[data-try]').forEach(b => b.addEventListener('click', closeSheet));
+  document.querySelectorAll('.tab.off').forEach(t => t.addEventListener('click', () => toast(`Intentionally disabled: ${t.dataset.name} is not part of this prototype.`)));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+
+  setMode('issue');
+  function tick() { const d = new Date(); $('clock').textContent = (d.getHours() % 12 || 12) + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  tick(); setInterval(tick, 30000);
+})();
+</script>
+<nav class="proto-links" aria-label="About this prototype">
+  <a href="https://github.com/ondsectest/apps/tree/main/Wispr%20Flow/Android%20Vivo%2060e/Silent%20Dictation%20Saves%20an%20Empty%20Transcript" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
+  <a href="https://www.linkedin.com/in/santhosh-tuppad-338b7412/" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="#0A66C2" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>Connect on LinkedIn</a>
+</nav>
+</body>
+</html>
