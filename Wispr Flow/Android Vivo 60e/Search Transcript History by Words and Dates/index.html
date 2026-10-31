@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<title>Search Transcript History by Words and Dates</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #1C1B1F; --muted: #85818B; --bg: #F6F6F7; --card: #EDECF0; --green: #2E7D4F; --purple: #6B2F8F; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: "Figtree", system-ui, sans-serif; color: var(--ink); background: #E9E6EE; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 12px; }
+  button, input { font-family: inherit; color: inherit; -webkit-appearance: none; appearance: none; }
+  .serif { font-family: "EB Garamond", Georgia, "Times New Roman", serif; }
+
+  .controls { display: flex; justify-content: center; gap: 10px; flex: none; }
+  .modebtn { border: 2px solid transparent; font-size: 14px; font-weight: 700; padding: 8px 18px; border-radius: 20px; cursor: pointer; display: flex; gap: 8px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.2); color: #fff; }
+  .modebtn.issue { background: #B3261E; }
+  .modebtn.impr { background: #1E7A46; }
+  .modebtn[aria-pressed="false"] { opacity: .55; box-shadow: none; }
+  .modebtn[aria-pressed="true"] { border-color: #1C1B1F; }
+
+  .phone { width: 390px; height: 844px; background: var(--bg); border: 10px solid #111; border-radius: 44px; box-shadow: 0 30px 60px rgba(0,0,0,.25); position: relative; overflow: hidden; display: flex; flex-direction: column; flex: none; }
+  @media (max-width: 500px) {
+    body { padding: 8px 0 0; gap: 8px; justify-content: flex-start; height: 100dvh; }
+    .phone { width: 100%; height: auto; flex: 1; min-height: 0; border: 0; border-radius: 0; box-shadow: none; }
+    .status, .navbar { display: none !important; }
+  }
+  .status { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 26px; font-size: 14px; font-weight: 500; color: #333; }
+  .bars { display: flex; gap: 2px; align-items: flex-end; }
+  .bars i { display: block; width: 3px; background: #333; border-radius: 1px; }
+  .mode-banner { flex: none; text-align: center; font-size: 13px; font-weight: 700; padding: 6px 10px; color: #fff; }
+  .mode-banner.issue { background: #B3261E; }
+  .mode-banner.impr { background: #1E7A46; }
+
+  .top { height: 58px; flex: none; display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; padding: 0 10px; }
+  .brand { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 26px; font-weight: 800; letter-spacing: -.5px; }
+  .icon-btn { width: 44px; height: 44px; border: 0; background: none; border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
+  .icon-btn:hover { background: rgba(0,0,0,.05); }
+  #search-btn { visibility: hidden; }
+  .impr-on #search-btn { visibility: visible; }
+
+  /* Search bar (Improvement) */
+  .sbar { flex: none; display: none; align-items: center; gap: 8px; padding: 6px 12px 8px; }
+  .sbar.show { display: flex; }
+  .sfield { flex: 1; min-width: 0; height: 48px; border: 2px solid #CFC9D6; border-radius: 10px; background: #fff; display: flex; align-items: center; gap: 10px; padding: 0 10px 0 12px; }
+  .sfield:focus-within { border-color: var(--purple); }
+  .sfield input { border: 0; outline: 0; background: none; font-size: 16.5px; flex: 1; min-width: 0; }
+  .sfield input::-webkit-search-cancel-button { display: none; }
+  .sfield input::placeholder { color: #B9B4C0; }
+  .sfield .clr { width: 28px; height: 28px; border: 0; border-radius: 50%; background: #EFEDF2; cursor: pointer; display: none; place-items: center; }
+  .sfield .clr.show { display: grid; }
+  .calbtn { width: 48px; height: 48px; flex: none; border: 2px solid #CFC9D6; border-radius: 10px; background: #fff; display: grid; place-items: center; cursor: pointer; }
+  .calbtn.on { border-color: var(--purple); background: #F6E9FD; }
+  .cancel { border: 0; background: none; font-size: 15px; font-weight: 600; color: var(--purple); cursor: pointer; padding: 0 4px; }
+  .chips { flex: none; display: none; gap: 8px; padding: 0 12px 8px; align-items: center; flex-wrap: wrap; }
+  .chips.show { display: flex; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; background: #F6E9FD; color: #5A2378; border-radius: 16px; padding: 5px 6px 5px 12px; }
+  .chip button { width: 22px; height: 22px; border: 0; border-radius: 50%; background: rgba(90,35,120,.12); cursor: pointer; display: grid; place-items: center; }
+  .count { font-size: 13.5px; color: var(--muted); }
+
+  .scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 0 14px 16px; position: relative; }
+  .stats { background: var(--card); border-radius: 24px; padding: 54px 20px 50px; text-align: center; margin-top: 6px; }
+  .stats .big { font-size: 46px; color: var(--green); line-height: 1; }
+  .stats p { font-size: 16px; margin-top: 10px; color: #2A2830; }
+  .stats p + p { margin-top: 4px; }
+  .dots { display: flex; justify-content: center; gap: 8px; margin: 12px 0 4px; }
+  .dots i { width: 8px; height: 8px; border-radius: 50%; background: #C9C6CE; }
+  .dots i:first-child { background: #2A2830; }
+  .day h2 { font-size: 34px; font-weight: 400; margin: 22px 4px 10px; line-height: 1.1; }
+  .group { background: var(--card); border-radius: 22px; overflow: hidden; }
+  .tx { padding: 16px 16px 14px; cursor: pointer; position: relative; transition: background .15s; }
+  .tx.flash { background: #E4E1E8; }
+  /* "Copied" shown right on the transcript that was tapped */
+  .copied { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(.9); background: #2B2930; color: #fff; font-size: 15px; font-weight: 600; padding: 9px 16px; border-radius: 20px; display: flex; align-items: center; gap: 7px; opacity: 0; transition: opacity .15s, transform .15s; pointer-events: none; z-index: 2; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  .copied.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .tx + .tx { border-top: 1px solid #DAD7DF; }
+  .tx .t { font-size: 17px; line-height: 1.45; color: #2A2830; }
+  .tx .tm { font-size: 14.5px; color: #9D99A3; margin-top: 8px; }
+  .tx mark { background: #FFE58A; color: inherit; border-radius: 3px; padding: 0 1px; }
+  .acts { display: none; gap: 10px; margin-top: 12px; align-items: center; }
+  .tx.open .acts { display: flex; }
+  .pill { height: 40px; border: 1.5px solid #8C8792; border-radius: 20px; background: none; display: inline-flex; align-items: center; gap: 8px; padding: 0 16px; font-size: 15px; cursor: pointer; }
+  .pill.more { width: 40px; padding: 0; justify-content: center; margin-left: auto; }
+  .empty { text-align: center; color: #77737D; font-size: 16px; line-height: 1.45; margin-top: 60px; padding: 0 20px; }
+  .empty b { display: block; color: var(--ink); font-size: 17px; margin-bottom: 4px; }
+
+  .tabs { flex: none; display: flex; justify-content: space-around; padding: 8px 4px 10px; background: var(--bg); }
+  .tab { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 14px; color: #6F6B75; cursor: pointer; min-width: 80px; }
+  .tab .ic { width: 58px; height: 32px; border-radius: 16px; display: grid; place-items: center; }
+  .tab.active { color: var(--ink); }
+  .tab.active .ic { background: #DCDADF; }
+  .tab.off { color: #B5B1BA; cursor: not-allowed; }
+  .navbar { height: 44px; flex: none; display: flex; justify-content: space-around; align-items: center; background: #fff; }
+
+  /* Calendar sheet */
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.4); z-index: 40; display: none; }
+  .scrim.show { display: block; }
+  .cal { position: absolute; left: 0; right: 0; bottom: 0; z-index: 41; background: #fff; border-radius: 22px 22px 0 0; padding: 14px 16px 18px; display: none; }
+  .cal.show { display: block; animation: up .2s ease-out; }
+  @keyframes up { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .cal .grip { width: 36px; height: 4px; border-radius: 2px; background: #D3D0D8; margin: 0 auto 12px; }
+  .cal .mh { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .cal .mh h3 { font-size: 18px; font-weight: 700; }
+  .cal .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+  .cal .wd { font-size: 12px; font-weight: 700; color: #9D99A3; padding: 4px 0; }
+  .cal .d { height: 42px; border: 0; background: none; border-radius: 50%; font-size: 15px; cursor: pointer; position: relative; width: 42px; margin: 0 auto; }
+  .cal .d.has::after { content: ""; position: absolute; left: 50%; bottom: 5px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--purple); }
+  .cal .d.today { outline: 1.5px solid #8C8792; }
+  .cal .d.sel { background: var(--purple); color: #fff; }
+  .cal .d.sel::after { background: #fff; }
+  .cal .d.fut { color: #C9C6CE; cursor: default; }
+  .cal .d:not(.fut):not(.sel):hover { background: #F3EEF7; }
+  .cal .d.inr { background: #F1E4FB; border-radius: 0; width: 100%; }
+  .cal .d.sel.from.hasto { border-radius: 50% 0 0 50%; width: 100%; }
+  .cal .d.sel.to { border-radius: 0 50% 50% 0; width: 100%; }
+  .cal .ft { display: flex; gap: 10px; margin-bottom: 12px; }
+  .cal .ft div { flex: 1; border: 2px solid #CFC9D6; border-radius: 10px; padding: 7px 12px; }
+  .cal .ft div.act { border-color: var(--purple); }
+  .cal .ft small { display: block; font-size: 11.5px; font-weight: 700; color: var(--muted); letter-spacing: .04em; }
+  .cal .ft b { font-size: 15.5px; font-weight: 600; }
+  .cal .hint { font-size: 12.5px; color: var(--muted); margin-top: 8px; line-height: 1.4; }
+  .cal .row button[aria-disabled="true"] { background: #F6F2FB; border-color: #CFCAD5; color: #A8A3AE; cursor: default; }
+  .cal .legend { font-size: 12.5px; color: var(--muted); margin-top: 10px; display: flex; align-items: center; gap: 6px; }
+  .cal .legend i { width: 6px; height: 6px; border-radius: 50%; background: var(--purple); display: inline-block; }
+  .cal .row { display: flex; gap: 10px; margin-top: 14px; }
+  .cal .row button { flex: 1; height: 46px; border-radius: 10px; border: 2px solid #3A3740; background: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .cal .row button.pri { background: #EBDDFF; }
+
+  /* Info sheets */
+  .sheet-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 60; display: none; }
+  .sheet-scrim.show { display: block; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 61; max-height: 90%; overflow-y: auto; background: #fff; border-radius: 20px 20px 0 0; padding: 16px 18px 18px; display: none; box-shadow: 0 -10px 30px rgba(0,0,0,.2); }
+  .sheet.show { display: block; animation: up .2s ease-out; }
+  .sheet h3 { font-size: 18px; font-weight: 700; padding-right: 40px; line-height: 1.3; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .tag { font-size: 11.5px; font-weight: 700; border-radius: 10px; padding: 2px 9px; background: #EFEDF2; color: #49454F; }
+  .tag.red { background: #FBE3E1; color: #B3261E; }
+  .tag.green { background: #DDF3E5; color: #1E7A46; }
+  .sheet h4 { font-size: 14px; font-weight: 700; margin-top: 14px; }
+  .sheet li { font-size: 13.5px; line-height: 1.45; color: #3D3A42; }
+  .sheet ol, .sheet ul { margin: 6px 0 0 18px; }
+  .sheet li + li { margin-top: 4px; }
+  .sheet .x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #F1EFF3; cursor: pointer; display: grid; place-items: center; }
+  .sheet .rowb { display: flex; gap: 8px; margin-top: 14px; }
+  .sheet .rowb button { flex: 1; height: 44px; border-radius: 10px; border: 1.5px solid #1C1B1F; background: #fff; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .sheet .rowb button.go { background: #1C1B1F; color: #fff; }
+
+  .toast { position: absolute; left: 14px; right: 14px; bottom: 100px; z-index: 70; background: #2B2930; color: #fff; padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.4; opacity: 0; transform: translateY(10px); transition: .2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+  <div class="controls">
+    <button class="modebtn issue" id="m-issue" aria-pressed="true" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M20 8h-2.8a6 6 0 0 0-1.8-2l1.6-1.6-1.4-1.4-2.2 2.2a6 6 0 0 0-2.8 0L8.4 3 7 4.4 8.6 6a6 6 0 0 0-1.8 2H4v2h2.1a6 6 0 0 0 0 2H4v2h2.8a6 6 0 0 0 10.4 0H20v-2h-2.1a6 6 0 0 0 0-2H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/></svg>
+      Issue</button>
+    <button class="modebtn impr" id="m-impr" aria-pressed="false" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
+      Improvement</button>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="status"><span id="clock">2:08</span>
+      <span class="bars"><i style="height:4px"></i><i style="height:7px"></i><i style="height:10px"></i><i style="height:13px"></i></span></div>
+    <div class="mode-banner issue" id="banner">Issue: how the app works today</div>
+
+    <div class="top" id="top">
+      <button class="icon-btn proto" data-name="Menu" aria-label="Menu"><svg width="22" height="18" viewBox="0 0 22 18" fill="#1C1B1F"><rect y="1" width="22" height="3.4" rx="1.7"/><rect y="7.3" width="22" height="3.4" rx="1.7"/><rect y="13.6" width="22" height="3.4" rx="1.7"/></svg></button>
+      <div class="brand"><svg width="30" height="30" viewBox="0 0 30 30" stroke="#1C1B1F" stroke-width="3" stroke-linecap="round"><path d="M3 5v20M9 10v10M15 7v16M21 11v8M27 4v22"/></svg>Wispr Flow</div>
+      <button class="icon-btn" id="search-btn" aria-label="Search transcripts"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="7"/><path d="M16 16l5 5"/></svg></button>
+    </div>
+
+    <div class="sbar" id="sbar">
+      <label class="sfield"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9D99A3" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="7"/><path d="M16 16l5 5"/></svg>
+        <input id="q" type="search" placeholder="Search transcripts" aria-label="Search transcripts" autocomplete="off">
+        <button class="clr" id="clr" aria-label="Clear search"><svg width="10" height="10" viewBox="0 0 16 16" stroke="#49454F" stroke-width="2.4" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button></label>
+      <button class="calbtn" id="calbtn" aria-label="Jump to a date"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1C1B1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button>
+      <button class="cancel" id="cancel">Cancel</button>
+    </div>
+    <div class="chips" id="chips"></div>
+
+    <div class="scroll" id="scroll"></div>
+
+    <nav class="tabs" aria-label="Main">
+      <button class="tab active"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 7v11h-6v-7H9v7H3V10z"/></svg></span>Home</button>
+      <button class="tab off" data-name="Dictionary"><span class="ic"><svg width="22" height="24" viewBox="0 0 22 24" fill="currentColor"><path d="M4 1h10l6 6v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm7 6v8a1.5 1.5 0 0 1-3 0V9H6.5v6a3 3 0 0 0 6 0V7z"/></svg></span>Dictionary</button>
+      <button class="tab off" data-name="Style"><span class="ic"><svg width="26" height="22" viewBox="0 0 26 22" fill="currentColor"><path d="M1 2h12v3.5H9V20H5V5.5H1zM13 9h11v3h-3.5v8h-3.5v-8H13z"/></svg></span>Style</button>
+      <button class="tab off" data-name="Snippets"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="6" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M8.5 7.5L20 19M8.5 16.5L20 5"/></svg></span>Snippets</button>
+    </nav>
+
+    <div class="scrim" id="scrim"></div>
+    <section class="cal" id="cal" role="dialog" aria-modal="true" aria-label="Jump to a date">
+      <div class="grip"></div>
+      <div class="ft"><div id="ft-from"><small>FROM</small><b id="v-from">Pick a day</b></div><div id="ft-to"><small>TO (OPTIONAL)</small><b id="v-to">Same day</b></div></div>
+      <div class="mh">
+        <button class="icon-btn" id="prevm" aria-label="Previous month"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#1C1B1F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5L2 10l7.5 7.5"/></svg></button>
+        <h3 id="mtitle"></h3>
+        <button class="icon-btn" id="nextm" aria-label="Next month"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#1C1B1F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2.5L10 10l-7.5 7.5"/></svg></button>
+      </div>
+      <div class="grid" id="cgrid"></div>
+      <div class="legend" id="legend"><i></i> Days with transcripts</div>
+      <p class="hint">Tap a day for From, then another day for To. With only From, results are for that one day.</p>
+      <div class="row"><button id="cal-clear">Clear</button><button class="pri" id="cal-apply" aria-disabled="true">Apply</button></div>
+    </section>
+
+    <div class="sheet-scrim" id="sheet-scrim"></div>
+    <section class="sheet" id="sh-issue" role="dialog" aria-modal="true" aria-labelledby="t-issue">
+      <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      <h3 id="t-issue">No way to search history or jump to a date</h3>
+      <div class="tags"><span class="tag red">Issue</span><span class="tag">Home, transcript history</span><span class="tag">Vivo 60e, Android</span></div>
+      <h4>Steps to reproduce</h4>
+      <ol>
+        <li>Open <b>Home</b>, which lists every transcript grouped by day.</li>
+        <li>Try to find something said a few days or weeks ago.</li>
+      </ol>
+      <h4>What happens</h4>
+      <ul>
+        <li>There is no search and no way to jump to a date.</li>
+        <li>The only way back is to scroll through every transcript, past the stats cards, day by day.</li>
+        <li>With heavy use, that can mean hundreds of transcripts.</li>
+      </ul>
+      <h4>Why it matters</h4>
+      <ul>
+        <li>People dictate messages, notes and drafts they later need again: an address, a figure, a reply they sent.</li>
+        <li>The history is already stored; it just cannot be found.</li>
+        <li>The Wispr Flow help docs describe search for the desktop Hub, but on the desktop app tested, no search was found either.</li>
+      </ul>
+      <div class="rowb"><button class="go" data-try>Try the issue</button></div>
+      <div class="rowb"><button data-close>Done</button></div>
+    </section>
+    <section class="sheet" id="sh-impr" role="dialog" aria-modal="true" aria-labelledby="t-impr">
+      <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      <h3 id="t-impr">Search transcripts by words and dates</h3>
+      <div class="tags"><span class="tag green">Improvement</span><span class="tag">Home, transcript history</span><span class="tag">Vivo 60e, Android</span></div>
+      <h4>What changes</h4>
+      <ul>
+        <li>A <b>search icon</b> sits at the top right of Home, where there is free space.</li>
+        <li>Tapping it opens a search box with the cursor ready. Results update as you type, matching words are highlighted, and the day headings stay so you know when it was said.</li>
+        <li>A <b>calendar</b> button opens a month view with <b>From</b> and <b>To</b>. Days with transcripts have a dot.</li>
+        <li>Tap one day for From and another for To to search a date range. If only From is chosen, results are for that one day only.</li>
+        <li>Search and dates work together, for example "invoice" from 20 to 25 October. The dates show as a chip with an × to clear them.</li>
+        <li>Clear messages when nothing matches. <b>Cancel</b> returns to the normal Home.</li>
+      </ul>
+      <h4>Why it is better</h4>
+      <ul>
+        <li>Find an old dictation in seconds instead of scrolling.</li>
+        <li>Matches how people remember things: by a word or by roughly when.</li>
+        <li>Brings Android in line with what the docs describe for desktop.</li>
+      </ul>
+      <div class="rowb"><button class="go" data-try>Try the improvement</button></div>
+      <div class="rowb"><button data-close>Done</button></div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <div class="navbar" aria-hidden="true">
+      <svg width="22" height="16" viewBox="0 0 22 16" stroke="#888" stroke-width="2"><path d="M2 2h18M2 8h18M2 14h18"/></svg>
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="9"/></svg>
+      <svg width="14" height="22" viewBox="0 0 14 22" fill="none" stroke="#888" stroke-width="2"><path d="M12 2L3 11l9 9"/></svg>
+    </div>
+  </div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const dayAgo = n => { const d = new Date(today); d.setDate(d.getDate() - n); return d; };
+  // Sample history (dummy text), newest first
+  const RAW = [
+    [0, '2:06pm', 'Apparently, there is an app restriction where I cannot capture the screenshot. Is there any hacker way around it?'],
+    [0, '2:05pm', 'When I am in Home, where all the transcripts are shown, maybe I want to go to the transcripts and then search on that date. But I don\'t see any way in the current style.'],
+    [0, '11:42am', 'Remind me to buy milk, bread and coffee beans on the way back home.'],
+    [1, '7:15pm', 'Hey Priya, the meeting is moved to Monday at 10 am. Please share the agenda before that.'],
+    [1, '9:03am', 'Draft for the team: we shipped the new onboarding today. Thanks everyone for the quick turnaround.'],
+    [2, '4:30pm', 'The Wi-Fi password for the guest network is on the fridge, not the router.'],
+    [4, '6:10pm', 'Book a table for four at the Green Leaf restaurant on Saturday evening.'],
+    [6, '12:20pm', 'Can you send me the invoice for September? I need it for the tax filing.'],
+    [9, '8:45am', 'Notes from the standup: login bug fixed, release candidate on Thursday, invoice export still pending.'],
+    [9, '3:12pm', 'Happy birthday Ravi! Have a wonderful year ahead.'],
+    [13, '10:05am', 'Flight to Delhi is at 6:40 in the morning. Leave home by 4.'],
+    [21, '5:55pm', 'Please call the plumber about the kitchen tap on Monday.'],
+    [34, '9:30am', 'Quarterly review: invoice backlog cleared, two new clients signed.'],
+  ];
+  const TX = RAW.map(([n, tm, t]) => ({ d: dayAgo(n), tm, t }));
+  const key = d => d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function dayLabel(d) {
+    const n = Math.round((today - d) / 86400000);
+    if (n === 0) return 'Today';
+    if (n === 1) return 'Yesterday';
+    return d.getDate() + ' ' + MONTHS[d.getMonth()] + (d.getFullYear() !== today.getFullYear() ? ' ' + d.getFullYear() : '');
+  }
+
+  let mode = 'issue', searching = false, q = '', selFrom = null, selTo = null, openIdx = 0;
+  let pFrom = null, pTo = null;   // pending choice inside the calendar
+  const short = d => d.getDate() + ' ' + MONTHS[d.getMonth()].slice(0, 3) + (d.getFullYear() !== today.getFullYear() ? ' ' + d.getFullYear() : '');
+  const rangeLabel = () => selTo ? short(selFrom) + ' to ' + short(selTo) : dayLabel(selFrom);
+  function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 3000); }
+  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function hl(t) {
+    if (!q) return esc(t);
+    const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig');
+    return t.split(re).map((p, i) => i % 2 ? '<mark>' + esc(p) + '</mark>' : esc(p)).join('');
+  }
+
+  const ICON_COPY = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2A2830" stroke-width="1.8"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2"/></svg>';
+  const ICON_FLAG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2A2830" stroke-width="1.8" stroke-linejoin="round"><path d="M5 21V4h10l-1 3h5v8h-8l1-3H5"/></svg>';
+  const ICON_MORE = '<svg width="4" height="18" viewBox="0 0 4 18" fill="#2A2830"><circle cx="2" cy="2" r="2"/><circle cx="2" cy="9" r="2"/><circle cx="2" cy="16" r="2"/></svg>';
+
+  function copyTx(el) {
+    const i = +el.dataset.i;
+    try { navigator.clipboard.writeText(TX[i].t).catch(() => {}); } catch (err) {}
+    if (openIdx !== i) {
+      openIdx = i;
+      document.querySelectorAll('#scroll .tx').forEach(t => t.classList.toggle('open', +t.dataset.i === i));
+    }
+    let b = el.querySelector('.copied');
+    if (!b) { b = document.createElement('div'); b.className = 'copied'; b.setAttribute('role', 'status');
+      b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L20 7"/></svg>Copied';
+      el.appendChild(b); }
+    el.classList.add('flash'); b.classList.add('show');
+    clearTimeout(el._c); el._c = setTimeout(() => { b.classList.remove('show'); el.classList.remove('flash'); }, 1400);
+  }
+  function render() {
+    const sc = $('scroll');
+    const filtering = searching && (q || selFrom);
+    let list = TX.map((x, i) => ({ ...x, i }));
+    if (selFrom) { const end = selTo || selFrom; list = list.filter(x => x.d >= selFrom && x.d <= end); }
+    if (q) list = list.filter(x => x.t.toLowerCase().includes(q.toLowerCase()));
+    let html = '';
+    if (!searching) html += '<div class="stats"><div class="big serif">81,369 words</div><p>spoken so far</p><p>You\'ve written 2 podcast seasons!</p></div><div class="dots"><i></i><i></i><i></i><i></i></div>';
+    if (!list.length) {
+      const where = selFrom ? (selTo ? 'from ' + esc(short(selFrom)) + ' to ' + esc(short(selTo)) : 'on ' + esc(dayLabel(selFrom))) : '';
+      html += selFrom && !q ? `<div class="empty"><b>No transcripts ${selTo ? 'in this date range' : 'on this day'}</b>Pick days with a dot in the calendar.</div>`
+        : `<div class="empty"><b>No transcripts match "${esc(q)}"</b>${selFrom ? where + '. Try another word or change the dates.' : 'Try another word.'}</div>`;
+    }
+    let cur = null;
+    list.forEach(x => {
+      const k = key(x.d);
+      if (k !== cur) { if (cur !== null) html += '</div></div>'; cur = k; html += `<div class="day"><h2 class="serif">${esc(dayLabel(x.d))}</h2><div class="group">`; }
+      html += `<div class="tx${x.i === openIdx ? ' open' : ''}" data-i="${x.i}"><div class="t">${hl(x.t)}</div><div class="tm">${x.tm}</div>
+        <div class="acts"><button class="pill" data-a="Copy">${ICON_COPY}Copy</button><button class="pill" data-a="Report">${ICON_FLAG}Report</button><button class="pill more" data-a="More" aria-label="More">${ICON_MORE}</button></div></div>`;
+    });
+    if (cur !== null) html += '</div></div>';
+    sc.innerHTML = html;
+    sc.querySelectorAll('.tx').forEach(el => el.addEventListener('click', e => {
+      const a = e.target.closest('[data-a]');
+      if (a && a.dataset.a !== 'Copy') { toast(`This is just a prototype of search, so ${a.dataset.a} is disabled.`); return; }
+      // Tapping a transcript (or Copy) copies it and says "Copied" right on that transcript
+      copyTx(el);
+    }));
+    // chips and count
+    const chips = $('chips');
+    if (filtering) {
+      let c = '';
+      if (selFrom) c += `<span class="chip">${esc(rangeLabel())}<button id="chip-date" aria-label="Clear date"><svg width="9" height="9" viewBox="0 0 16 16" stroke="#5A2378" stroke-width="2.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button></span>`;
+      c += `<span class="count">${list.length} transcript${list.length === 1 ? '' : 's'}</span>`;
+      chips.innerHTML = c; chips.classList.add('show');
+      if (selFrom) $('chip-date').addEventListener('click', () => { selFrom = selTo = null; render(); });
+    } else chips.classList.remove('show');
+    $('calbtn').classList.toggle('on', !!selFrom);
+    $('clr').classList.toggle('show', !!q);
+  }
+
+  // Search
+  function openSearch() {
+    searching = true; $('sbar').classList.add('show'); $('top').style.display = 'none';
+    render(); $('scroll').scrollTop = 0; $('q').focus({ preventScroll: true });
+  }
+  function closeSearch() {
+    searching = false; q = ''; selFrom = selTo = null; $('q').value = ''; $('q').blur();
+    $('sbar').classList.remove('show'); $('top').style.display = ''; render();
+  }
+  $('search-btn').addEventListener('click', openSearch);
+  $('cancel').addEventListener('click', closeSearch);
+  $('q').addEventListener('input', () => { q = $('q').value.trim(); render(); $('scroll').scrollTop = 0; });
+  $('clr').addEventListener('mousedown', e => e.preventDefault());
+  $('clr').addEventListener('click', e => { e.preventDefault(); $('q').value = ''; q = ''; render(); $('q').focus({ preventScroll: true }); });
+
+  // Calendar
+  let vm = new Date(today.getFullYear(), today.getMonth(), 1);
+  function renderCal() {
+    $('legend').innerHTML = '<i></i> ' + (q ? 'Days with transcripts matching "' + esc(q) + '"' : 'Days with transcripts');
+    $('mtitle').textContent = MONTHS[vm.getMonth()] + ' ' + vm.getFullYear();
+    const g = $('cgrid'); let h = ['M','T','W','T','F','S','S'].map(w => `<div class="wd">${w}</div>`).join('');
+    const first = (vm.getDay() + 6) % 7, days = new Date(vm.getFullYear(), vm.getMonth() + 1, 0).getDate();
+    for (let i = 0; i < first; i++) h += '<div></div>';
+    for (let d = 1; d <= days; d++) {
+      const dt = new Date(vm.getFullYear(), vm.getMonth(), d);
+      const cls = ['d'];
+      const hasTx = TX.some(x => key(x.d) === key(dt) && (!q || x.t.toLowerCase().includes(q.toLowerCase())));
+      if (hasTx) cls.push('has');
+      if (key(dt) === key(today)) cls.push('today');
+      if (pFrom && key(dt) === key(pFrom)) { cls.push('sel', 'from'); if (pTo) cls.push('hasto'); }
+      if (pTo && key(dt) === key(pTo)) cls.push('sel', 'to');
+      if (pFrom && pTo && dt > pFrom && dt < pTo) cls.push('inr');
+      if (dt > today) cls.push('fut');
+      h += `<button class="${cls.join(' ')}" data-d="${d}" ${dt > today ? 'aria-disabled="true"' : ''} aria-label="${d} ${MONTHS[vm.getMonth()]}">${d}</button>`;
+    }
+    g.innerHTML = h;
+    g.querySelectorAll('.d').forEach(b => b.addEventListener('click', () => {
+      if (b.classList.contains('fut')) return;
+      const d = new Date(vm.getFullYear(), vm.getMonth(), +b.dataset.d);
+      if (!pFrom || pTo) { pFrom = d; pTo = null; }            // start a new choice
+      else if (key(d) === key(pFrom)) { pTo = null; }          // same day: one day only
+      else if (d < pFrom) { pTo = pFrom; pFrom = d; }          // earlier day: becomes From
+      else pTo = d;
+      renderCal();
+    }));
+    $('v-from').textContent = pFrom ? short(pFrom) : 'Pick a day';
+    $('v-to').textContent = pTo ? short(pTo) : 'Same day';
+    $('ft-from').classList.toggle('act', !pFrom || !!pTo);
+    $('ft-to').classList.toggle('act', !!pFrom && !pTo);
+    $('cal-apply').setAttribute('aria-disabled', !pFrom);
+    $('nextm').style.visibility = (vm.getFullYear() === today.getFullYear() && vm.getMonth() === today.getMonth()) ? 'hidden' : 'visible';
+  }
+  function openCal() { $('q').blur(); pFrom = selFrom; pTo = selTo; const base = selFrom || today; vm = new Date(base.getFullYear(), base.getMonth(), 1); renderCal(); $('cal').classList.add('show'); $('scrim').classList.add('show'); }
+  function closeCal() { $('cal').classList.remove('show'); $('scrim').classList.remove('show'); }
+  $('calbtn').addEventListener('click', openCal);
+  $('scrim').addEventListener('click', closeCal);
+  $('cal-clear').addEventListener('click', () => { pFrom = pTo = null; renderCal(); });
+  $('cal-apply').addEventListener('click', () => {
+    if (!pFrom) return;
+    selFrom = pFrom; selTo = pTo; closeCal(); render(); $('scroll').scrollTop = 0;
+  });
+  $('prevm').addEventListener('click', () => { vm.setMonth(vm.getMonth() - 1); renderCal(); });
+  $('nextm').addEventListener('click', () => { vm.setMonth(vm.getMonth() + 1); renderCal(); });
+
+  // Issue / Improvement
+  function setMode(m) {
+    mode = m;
+    $('m-issue').setAttribute('aria-pressed', m === 'issue');
+    $('m-impr').setAttribute('aria-pressed', m === 'impr');
+    $('banner').className = 'mode-banner ' + m;
+    $('banner').textContent = m === 'issue' ? 'Issue: how the app works today' : 'Improvement: search by words and dates';
+    $('phone').classList.toggle('impr-on', m === 'impr');
+    if (m === 'issue' && searching) closeSearch();
+  }
+  let openSheet = null;
+  function showSheet(id) {
+    closeSheet(); closeCal(); $('toast').classList.remove('show');
+    openSheet = $(id); openSheet.classList.add('show'); $('sheet-scrim').classList.add('show');
+    openSheet.scrollTop = 0; openSheet.querySelector('.x').focus({ preventScroll: true });
+  }
+  function closeSheet() { if (openSheet) openSheet.classList.remove('show'); $('sheet-scrim').classList.remove('show'); openSheet = null; }
+  $('m-issue').addEventListener('click', () => { setMode('issue'); showSheet('sh-issue'); });
+  $('m-impr').addEventListener('click', () => { setMode('impr'); showSheet('sh-impr'); });
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheet));
+  $('sheet-scrim').addEventListener('click', closeSheet);
+  document.querySelectorAll('[data-try]').forEach(b => b.addEventListener('click', () => {
+    closeSheet(); $('scroll').scrollTop = 0;
+    toast(mode === 'issue' ? 'Try to find "invoice" from a few weeks ago: only scrolling works.' : 'Tap the search icon at the top right, then try "invoice" and a date range in the calendar.');
+  }));
+
+  document.querySelectorAll('.tab.off').forEach(t => t.addEventListener('click', () => toast(`Intentionally disabled: ${t.dataset.name} is not part of this Home prototype.`)));
+  document.querySelectorAll('.proto').forEach(el => el.addEventListener('click', () => toast(`This is just a prototype of search, so ${el.dataset.name} is disabled.`)));
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (openSheet) closeSheet(); else if ($('cal').classList.contains('show')) closeCal(); else if (searching) closeSearch();
+  });
+
+  setMode('issue'); render();
+  function tick() { const d = new Date(); let h = d.getHours() % 12 || 12; $('clock').textContent = h + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  tick(); setInterval(tick, 30000);
+})();
+</script>
+</body>
+</html>
