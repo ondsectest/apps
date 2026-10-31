@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
 <title>Search Transcript History by Words and Dates</title>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=EB+Garamond:wght@400;500&family=Roboto:wght@500&display=swap" rel="stylesheet">
 <style>
   :root { --ink: #1C1B1F; --muted: #85818B; --bg: #F6F6F7; --card: #EDECF0; --green: #2E7D4F; --purple: #6B2F8F; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
   body { font-family: "Figtree", system-ui, sans-serif; color: var(--ink); background: #E9E6EE; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 12px; }
   button, input { font-family: inherit; color: inherit; -webkit-appearance: none; appearance: none; }
@@ -71,15 +71,15 @@
   .group { background: var(--card); border-radius: 22px; overflow: hidden; }
   .tx { padding: 16px 16px 14px; cursor: pointer; position: relative; transition: background .15s; }
   .tx.flash { background: #E4E1E8; }
+  .tx { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; outline: none; }
   /* "Copied" shown right on the transcript that was tapped */
-  .copied { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(.9); background: #2B2930; color: #fff; font-size: 15px; font-weight: 600; padding: 9px 16px; border-radius: 20px; display: flex; align-items: center; gap: 7px; opacity: 0; transition: opacity .15s, transform .15s; pointer-events: none; z-index: 2; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  .copied { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(.94); background: #fff; color: #1C1B1F; font-family: "Roboto", "Figtree", system-ui, sans-serif; font-size: 16px; font-weight: 500; min-width: 136px; height: 50px; padding: 0 22px; border-radius: 14px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s, transform .15s; pointer-events: none; z-index: 2; box-shadow: 0 6px 18px rgba(0,0,0,.14); }
   .copied.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   .tx + .tx { border-top: 1px solid #DAD7DF; }
   .tx .t { font-size: 17px; line-height: 1.45; color: #2A2830; }
   .tx .tm { font-size: 14.5px; color: #9D99A3; margin-top: 8px; }
   .tx mark { background: #FFE58A; color: inherit; border-radius: 3px; padding: 0 1px; }
-  .acts { display: none; gap: 10px; margin-top: 12px; align-items: center; }
-  .tx.open .acts { display: flex; }
+  .acts { display: flex; gap: 10px; margin-top: 12px; align-items: center; }   /* always shown under every transcript */
   .pill { height: 40px; border: 1.5px solid #8C8792; border-radius: 20px; background: none; display: inline-flex; align-items: center; gap: 8px; padding: 0 16px; font-size: 15px; cursor: pointer; }
   .pill.more { width: 40px; padding: 0; justify-content: center; margin-left: auto; }
   .empty { text-align: center; color: #77737D; font-size: 16px; line-height: 1.45; margin-top: 60px; padding: 0 20px; }
@@ -310,14 +310,14 @@
 
   function copyTx(el) {
     const i = +el.dataset.i;
-    try { navigator.clipboard.writeText(TX[i].t).catch(() => {}); } catch (err) {}
+    // Prototype only: the text is not written to the clipboard, so the phone does not add its own second "Copied" popup.
     if (openIdx !== i) {
       openIdx = i;
       document.querySelectorAll('#scroll .tx').forEach(t => t.classList.toggle('open', +t.dataset.i === i));
     }
     let b = el.querySelector('.copied');
     if (!b) { b = document.createElement('div'); b.className = 'copied'; b.setAttribute('role', 'status');
-      b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L20 7"/></svg>Copied';
+      b.textContent = 'Copied';
       el.appendChild(b); }
     el.classList.add('flash'); b.classList.add('show');
     clearTimeout(el._c); el._c = setTimeout(() => { b.classList.remove('show'); el.classList.remove('flash'); }, 1400);
