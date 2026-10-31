@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<title>Save and Done Only When Languages Change</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #1C1B1F; --muted: #85818B; --line: #3A3740; --btn: #EBDDFF; --sel: #FFFFED; --card: #F9F9F9; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: "Figtree", system-ui, sans-serif; color: var(--ink); background: #E9E6EE; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 12px; }
+  button, input { font-family: inherit; color: inherit; -webkit-appearance: none; appearance: none; }
+
+  /* Issue and Improvement buttons */
+  .controls { display: flex; justify-content: center; gap: 10px; flex: none; }
+  .modebtn { border: 2px solid transparent; font-size: 14px; font-weight: 700; padding: 8px 18px; border-radius: 20px; cursor: pointer; display: flex; gap: 8px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.2); color: #fff; }
+  .modebtn.issue { background: #B3261E; }
+  .modebtn.impr { background: #1E7A46; }
+  .modebtn[aria-pressed="false"] { opacity: .55; box-shadow: none; }
+  .modebtn[aria-pressed="true"] { border-color: #1C1B1F; }
+
+  .phone { width: 390px; height: 844px; background: #fff; border: 10px solid #111; border-radius: 44px; box-shadow: 0 30px 60px rgba(0,0,0,.25); position: relative; overflow: hidden; display: flex; flex-direction: column; flex: none; }
+  @media (max-width: 500px) {
+    body { padding: 8px 0 0; gap: 8px; justify-content: flex-start; height: 100dvh; }
+    .phone { width: 100%; height: auto; flex: 1; min-height: 0; border: 0; border-radius: 0; box-shadow: none; }
+    .status, .navbar { display: none !important; }
+  }
+  .status { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 26px; font-size: 14px; font-weight: 500; color: #333; }
+  .bars { display: flex; gap: 2px; align-items: flex-end; }
+  .bars i { display: block; width: 3px; background: #333; border-radius: 1px; }
+  .mode-banner { flex: none; text-align: center; font-size: 13px; font-weight: 700; padding: 6px 10px; color: #fff; }
+  .mode-banner.issue { background: #B3261E; }
+  .mode-banner.impr { background: #1E7A46; }
+
+  .screen { flex: 1; min-height: 0; display: none; flex-direction: column; position: relative; }
+  .screen.active { display: flex; }
+  .head { height: 60px; flex: none; display: grid; grid-template-columns: 52px 1fr 52px; align-items: center; padding: 0 6px; }
+  .head h1 { text-align: center; font-size: 20px; font-weight: 500; }
+  .icon-btn { width: 44px; height: 44px; border: 0; background: none; border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
+  .icon-btn:hover { background: rgba(0,0,0,.05); }
+
+  /* Settings */
+  #s-settings { background: #F5F5F5; }
+  .scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 0 16px 20px; }
+  .sec { font-size: 13px; font-weight: 600; letter-spacing: .04em; color: #6F6B75; margin: 18px 4px 10px; }
+  .row { width: 100%; text-align: left; border: 0; background: #fff; border-radius: 20px; padding: 16px 16px 16px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; cursor: pointer; }
+  .row .t { font-size: 16.5px; font-weight: 600; }
+  .row .d { font-size: 14.5px; color: #8A8590; margin-top: 4px; line-height: 1.35; }
+  .row .txt { flex: 1; }
+  .row.off { cursor: default; }
+  .group { background: #fff; border-radius: 20px; margin-bottom: 8px; }
+  .group .row { margin: 0; background: none; }
+  .tog { width: 52px; height: 32px; border-radius: 16px; flex: none; position: relative; }
+  .tog::after { content: ""; position: absolute; left: 7px; top: 9px; width: 14px; height: 14px; border-radius: 50%; background: #fff; }
+  .tog.locked { background: #CBC6D1; }
+  .tog.soft { background: #F3E9FD; }
+
+  /* Languages and Select languages */
+  #s-languages, #s-select { background: #fff; }
+  .list { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 9px; }
+  .lang { width: 100%; min-height: 52px; flex: none; border: 2px solid var(--line); border-radius: 10px; background: var(--card); display: flex; align-items: center; justify-content: space-between; padding: 0 20px 0 22px; font-size: 16.5px; font-weight: 500; color: #2A2830; cursor: pointer; text-align: left; }
+  .lang.on { background: var(--sel); }
+  .lang .ck { width: 22px; height: 22px; visibility: hidden; flex: none; }
+  .lang.on .ck { visibility: visible; }
+  .newtag { font-size: 11px; font-weight: 700; color: #1E7A46; background: #DDF3E5; border-radius: 8px; padding: 2px 7px; margin-right: 10px; flex: none; }
+  .search { margin: 8px 16px 14px; height: 52px; border: 2px solid #CFC9D6; border-radius: 10px; display: flex; align-items: center; gap: 14px; padding: 0 14px; flex: none; }
+  .search input { border: 0; outline: 0; font-size: 17px; flex: 1; min-width: 0; background: none; }
+  .search input::placeholder { color: #C2BDC8; }
+  .search:focus-within { border-color: #8E4FBF; }
+  .fade { position: absolute; left: 0; right: 0; height: 40px; pointer-events: none; background: linear-gradient(to bottom, rgba(255,255,255,0), #fff); }
+  .noresult { text-align: center; color: var(--muted); font-size: 15px; margin-top: 30px; }
+
+  .actions { flex: none; padding: 8px 16px 14px; display: flex; flex-direction: column; gap: 10px; position: relative; }
+  .big { height: 52px; border-radius: 10px; border: 2px solid var(--line); background: #fff; font-size: 17px; font-weight: 600; cursor: pointer; color: var(--ink); }
+  .big.primary { background: var(--btn); }
+  .big:hover { filter: brightness(.98); }
+  /* Disabled look for Save and Done (Improvement only) */
+  .big.primary[aria-disabled="true"] { background: #F6F2FB; border-color: #CFCAD5; color: #A8A3AE; cursor: default; filter: none; }
+
+  .navbar { height: 44px; flex: none; display: flex; justify-content: space-around; align-items: center; background: #fff; }
+
+  /* Callout pointing at the bug */
+  .callout { position: absolute; left: 16px; right: 16px; bottom: calc(100% + 2px); z-index: 6; background: #B3261E; color: #fff; font-size: 13px; line-height: 1.4; border-radius: 10px; padding: 9px 12px; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; }
+  .callout.green { background: #1E7A46; }
+  .callout.show { display: block; }
+  .callout::after { content: ""; position: absolute; left: 50%; bottom: -7px; margin-left: -7px; border: 7px solid transparent; border-bottom: 0; border-top-color: inherit; }
+  .callout.red::after { border-top-color: #B3261E; }
+  .callout.green::after { border-top-color: #1E7A46; }
+
+  /* Info sheets */
+  .sheet-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 60; display: none; }
+  .sheet-scrim.show { display: block; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 61; max-height: 90%; overflow-y: auto; background: #fff; border-radius: 20px 20px 0 0; padding: 16px 18px 18px; display: none; box-shadow: 0 -10px 30px rgba(0,0,0,.2); }
+  .sheet.show { display: block; animation: up .2s ease-out; }
+  @keyframes up { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .sheet h3 { font-size: 18px; font-weight: 700; padding-right: 40px; line-height: 1.3; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .tag { font-size: 11.5px; font-weight: 700; border-radius: 10px; padding: 2px 9px; background: #EFEDF2; color: #49454F; }
+  .tag.red { background: #FBE3E1; color: #B3261E; }
+  .tag.green { background: #DDF3E5; color: #1E7A46; }
+  .sheet h4 { font-size: 14px; font-weight: 700; margin-top: 14px; }
+  .sheet li { font-size: 13.5px; line-height: 1.45; color: #3D3A42; }
+  .sheet ol, .sheet ul { margin: 6px 0 0 18px; }
+  .sheet li + li { margin-top: 4px; }
+  .sheet .x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #F1EFF3; cursor: pointer; display: grid; place-items: center; }
+  .sheet .rowb { display: flex; gap: 8px; margin-top: 14px; }
+  .sheet .rowb button { flex: 1; height: 44px; border-radius: 10px; border: 1.5px solid #1C1B1F; background: #fff; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .sheet .rowb button.go { background: #1C1B1F; color: #fff; }
+
+  .toast { position: absolute; left: 14px; right: 14px; top: 110px; z-index: 70; background: #2B2930; color: #fff; padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.4; opacity: 0; transform: translateY(10px); transition: .2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+  <div class="controls">
+    <button class="modebtn issue" id="m-issue" aria-pressed="true" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M20 8h-2.8a6 6 0 0 0-1.8-2l1.6-1.6-1.4-1.4-2.2 2.2a6 6 0 0 0-2.8 0L8.4 3 7 4.4 8.6 6a6 6 0 0 0-1.8 2H4v2h2.1a6 6 0 0 0 0 2H4v2h2.8a6 6 0 0 0 10.4 0H20v-2h-2.1a6 6 0 0 0 0-2H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/></svg>
+      Issue</button>
+    <button class="modebtn impr" id="m-impr" aria-pressed="false" aria-haspopup="dialog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
+      Improvement</button>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="status"><span id="clock">11:16</span>
+      <span class="bars"><i style="height:4px"></i><i style="height:7px"></i><i style="height:10px"></i><i style="height:13px"></i></span></div>
+    <div class="mode-banner issue" id="banner">Issue: how the app works today</div>
+
+    <!-- Settings -->
+    <section class="screen active" id="s-settings">
+      <div class="head">
+        <button class="icon-btn proto" data-name="Back" aria-label="Back"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <h1>Settings</h1><span></span>
+      </div>
+      <div class="scroll">
+        <div class="sec">GENERAL</div>
+        <button class="row" id="open-languages"><span class="txt"><span class="t">Languages</span><span class="d" id="lang-summary" style="display:block"></span></span>
+          <svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#1C1B1F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2.5L10 10l-7.5 7.5"/></svg></button>
+        <button class="row proto" data-name="Flow Bubble Size"><span class="txt"><span class="t">Flow Bubble Size</span></span>
+          <svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#1C1B1F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2.5L10 10l-7.5 7.5"/></svg></button>
+        <button class="row proto" data-name="Flow Bubble Opacity"><span class="txt"><span class="t">Flow Bubble Opacity</span></span>
+          <svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#1C1B1F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2.5L10 10l-7.5 7.5"/></svg></button>
+        <button class="row proto" data-name="Add Wispr Flow to LinkedIn"><span class="txt"><span class="t">Add Wispr Flow to LinkedIn</span><span class="d" style="display:block">Showcase Wispr Flow under Connected apps on your LinkedIn profile</span></span>
+          <svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#1C1B1F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2.5L10 10l-7.5 7.5"/></svg></button>
+        <div class="sec">DATA &amp; PRIVACY</div>
+        <div class="group">
+          <button class="row proto" data-name="Improve the model for everyone"><span class="txt"><span class="t">Improve the model for everyone</span><span class="d" style="display:block">Your organization does not allow data to be used for model training</span></span><span class="tog locked"></span></button>
+          <button class="row proto" data-name="Dictation cloud storage"><span class="txt"><span class="t">Dictation cloud storage</span><span class="d" style="display:block">Stores transcription data on Wispr servers to enable features that require cross-device access to your data</span></span><span class="tog soft"></span></button>
+        </div>
+        <button class="row proto" data-name="Local data storage"><span class="txt"><span class="t">Local data storage</span><span class="d" style="display:block">Keep stored</span></span>
+          <svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#1C1B1F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2.5L10 10l-7.5 7.5"/></svg></button>
+      </div>
+    </section>
+
+    <!-- Languages -->
+    <section class="screen" id="s-languages">
+      <div class="head">
+        <button class="icon-btn" id="lang-back" aria-label="Back"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <h1>Languages</h1><span></span>
+      </div>
+      <div class="list" id="lang-list"></div>
+      <div class="actions">
+        <div class="callout" id="co-save"></div>
+        <button class="big" id="add-more">Add more</button>
+        <button class="big primary" id="save">Save</button>
+      </div>
+    </section>
+
+    <!-- Select languages -->
+    <section class="screen" id="s-select">
+      <div class="head">
+        <button class="icon-btn" id="sel-back" aria-label="Back"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+        <h1>Select languages</h1><span></span>
+      </div>
+      <label class="search"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#B9B4C0" stroke-width="1.8"><circle cx="10.5" cy="10.5" r="7.5"/><path d="M16 16l5 5"/></svg>
+        <input id="q" type="search" placeholder="Search languages" aria-label="Search languages" autocomplete="off"></label>
+      <div class="list" id="sel-list"></div>
+      <div class="actions">
+        <div class="fade" style="top:-40px"></div>
+        <div class="callout" id="co-done"></div>
+        <button class="big primary" id="done">Done</button>
+      </div>
+    </section>
+
+    <div class="sheet-scrim" id="sheet-scrim"></div>
+    <section class="sheet" id="sh-issue" role="dialog" aria-modal="true" aria-labelledby="t-issue">
+      <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      <h3 id="t-issue">Save and Done are enabled even when nothing has changed</h3>
+      <div class="tags"><span class="tag red">Issue</span><span class="tag">Settings, Languages</span><span class="tag">Vivo 60e, Android</span></div>
+      <h4>Steps to reproduce</h4>
+      <ol>
+        <li>Open <b>Settings</b> and tap <b>Languages</b>.</li>
+        <li>Without changing anything, look at <b>Save</b>.</li>
+        <li>Tap <b>Add more</b>.</li>
+        <li>Without selecting a new language, look at <b>Done</b>.</li>
+      </ol>
+      <h4>What happens</h4>
+      <ul>
+        <li><b>Save</b> is enabled on Languages even though no language was added or removed.</li>
+        <li><b>Done</b> is enabled on Select languages even though no new language was selected.</li>
+        <li>Tapping either one looks like an action was taken, but nothing changed.</li>
+      </ul>
+      <h4>What was expected</h4>
+      <ul>
+        <li><b>Save</b> stays disabled until the languages differ from what is saved: a language added or one deselected.</li>
+        <li><b>Done</b> stays disabled until at least one new language is selected.</li>
+        <li>Leaving without changes is already covered by <b>Back</b>.</li>
+      </ul>
+      <div class="rowb"><button class="go" data-try>Try the issue</button></div>
+      <div class="rowb"><button data-close>Done</button></div>
+    </section>
+    <section class="sheet" id="sh-impr" role="dialog" aria-modal="true" aria-labelledby="t-impr">
+      <button class="x" data-close aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      <h3 id="t-impr">Save and Done turn on only when something changed</h3>
+      <div class="tags"><span class="tag green">Improvement</span><span class="tag">Settings, Languages</span><span class="tag">Vivo 60e, Android</span></div>
+      <h4>Languages</h4>
+      <ul>
+        <li><b>Save</b> is disabled when the screen opens.</li>
+        <li>It turns on when a language is deselected or a new one is added from Add more.</li>
+        <li>If the change is undone, for example the same language is ticked again, <b>Save</b> turns off again.</li>
+      </ul>
+      <h4>Select languages (Add more)</h4>
+      <ul>
+        <li><b>Done</b> is disabled until at least one new language is selected.</li>
+        <li>Deselecting it again turns <b>Done</b> off. <b>Back</b> leaves without changes.</li>
+        <li>Languages added with Done show a small <b>New</b> tag on the Languages screen until saved.</li>
+      </ul>
+      <h4>Why it is better</h4>
+      <ul>
+        <li>The button state tells the truth: it is only active when there is something to save.</li>
+        <li>No taps that look like they did something but did nothing.</li>
+      </ul>
+      <div class="rowb"><button class="go" data-try>Try the improvement</button></div>
+      <div class="rowb"><button data-close>Done</button></div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <div class="navbar" aria-hidden="true">
+      <svg width="22" height="16" viewBox="0 0 22 16" stroke="#888" stroke-width="2"><path d="M2 2h18M2 8h18M2 14h18"/></svg>
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="9"/></svg>
+      <svg width="14" height="22" viewBox="0 0 14 22" fill="none" stroke="#888" stroke-width="2"><path d="M12 2L3 11l9 9"/></svg>
+    </div>
+  </div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const ALL = ["Afrikaans", "Albanian (Shqip)", "Amharic (አማርኛ)", "Arabic (العربية)", "Armenian (Հայերեն)", "Assamese (অসমীয়া)",
+    "Azerbaijani (Azərbaycan)", "Bashkir (Башҡортса)", "Basque (Euskara)", "Belarusian (Беларуская)", "Bengali (বাংলা)",
+    "Bosnian (Bosanski)", "Bulgarian (Български)", "Catalan (Català)", "Chinese (中文)", "Croatian (Hrvatski)", "Czech (Čeština)",
+    "Danish (Dansk)", "Dutch (Nederlands)", "English", "Estonian (Eesti)", "Finnish (Suomi)", "French (Français)", "German (Deutsch)",
+    "Greek (Ελληνικά)", "Gujarati (ગુજરાતી)", "Hebrew (עברית)", "Hindi (हिन्दी)", "Hungarian (Magyar)", "Indonesian (Bahasa Indonesia)",
+    "Italian (Italiano)", "Japanese (日本語)", "Kannada (ಕನ್ನಡ)", "Korean (한국어)", "Malayalam (മലയാളം)", "Marathi (मराठी)",
+    "Nepali (नेपाली)", "Norwegian (Norsk)", "Persian (فارسی)", "Polish (Polski)", "Portuguese (Português)", "Punjabi (ਪੰਜਾਬੀ)",
+    "Romanian (Română)", "Russian (Русский)", "Spanish (Español)", "Swahili (Kiswahili)", "Swedish (Svenska)", "Tamil (தமிழ்)",
+    "Telugu (తెలుగు)", "Thai (ไทย)", "Turkish (Türkçe)", "Ukrainian (Українська)", "Urdu (اردو)", "Vietnamese (Tiếng Việt)"];
+  let saved = ["Hindi (हिन्दी)", "Kannada (ಕನ್ನಡ)", "English", "Spanish (Español)"];   // what Settings has saved
+  let rows = [];          // languages listed on the Languages screen: { name, on, isNew }
+  let picks = new Set();  // selected on Select languages
+  let mode = 'issue';
+  const CK = '<svg class="ck" viewBox="0 0 24 24" fill="none" stroke="#1C1B1F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L20 7"/></svg>';
+
+  function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 3000); }
+  function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id)); }
+
+  // ---------- Issue / Improvement ----------
+  function setMode(m) {
+    mode = m;
+    $('m-issue').setAttribute('aria-pressed', m === 'issue');
+    $('m-impr').setAttribute('aria-pressed', m === 'impr');
+    $('banner').className = 'mode-banner ' + m;
+    $('banner').textContent = m === 'issue' ? 'Issue: how the app works today' : 'Improvement: Save and Done only on a change';
+    refresh();
+  }
+  let openSheet = null;
+  function showSheet(id) {
+    closeSheet(); $('toast').classList.remove('show');
+    openSheet = $(id); openSheet.classList.add('show'); $('sheet-scrim').classList.add('show');
+    openSheet.scrollTop = 0; openSheet.querySelector('.x').focus({ preventScroll: true });
+  }
+  function closeSheet() { if (openSheet) openSheet.classList.remove('show'); $('sheet-scrim').classList.remove('show'); openSheet = null; }
+  $('m-issue').addEventListener('click', () => { setMode('issue'); showSheet('sh-issue'); });
+  $('m-impr').addEventListener('click', () => { setMode('impr'); showSheet('sh-impr'); });
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheet));
+  $('sheet-scrim').addEventListener('click', closeSheet);
+  document.querySelectorAll('[data-try]').forEach(b => b.addEventListener('click', () => {
+    closeSheet(); show('s-settings');
+    toast(mode === 'issue' ? 'Tap Languages and look at Save, then Add more and look at Done.' : 'Tap Languages: Save is off until you change something.');
+  }));
+
+  // ---------- Settings ----------
+  function renderSummary() { $('lang-summary').textContent = saved.join(' · '); }
+  $('open-languages').addEventListener('click', () => {
+    rows = saved.map(name => ({ name, on: true, isNew: false }));
+    renderLanguages(); show('s-languages'); $('lang-list').scrollTop = 0;
+  });
+
+  // ---------- Languages ----------
+  const current = () => rows.filter(r => r.on).map(r => r.name);
+  const changed = () => { const c = current(); return c.length !== saved.length || c.some(n => !saved.includes(n)); };
+  function renderLanguages() {
+    const list = $('lang-list'); list.innerHTML = '';
+    rows.forEach(r => {
+      const b = document.createElement('button');
+      b.className = 'lang' + (r.on ? ' on' : '');
+      b.setAttribute('aria-pressed', r.on);
+      const s = document.createElement('span'); s.textContent = r.name; s.style.flex = '1';
+      b.appendChild(s);
+      if (r.isNew && mode === 'impr') b.insertAdjacentHTML('beforeend', '<span class="newtag">New</span>');
+      b.insertAdjacentHTML('beforeend', CK);
+      b.addEventListener('click', () => { r.on = !r.on; renderLanguages(); });
+      list.appendChild(b);
+    });
+    refresh();
+  }
+  $('lang-back').addEventListener('click', () => show('s-settings'));
+  $('add-more').addEventListener('click', () => {
+    picks = new Set(); $('q').value = ''; renderSelect(); show('s-select'); $('sel-list').scrollTop = 0;
+  });
+  $('save').addEventListener('click', () => {
+    if (mode === 'impr' && !changed()) return;   // disabled
+    const wasChanged = changed();
+    saved = current(); renderSummary(); show('s-settings');
+    toast(wasChanged ? 'Languages saved. This is a prototype only.' : 'Save was tapped, but nothing had changed.');
+  });
+
+  // ---------- Select languages ----------
+  function renderSelect() {
+    const q = $('q').value.trim().toLowerCase();
+    const listed = rows.map(r => r.name);
+    const items = ALL.filter(n => !listed.includes(n) && n.toLowerCase().includes(q));
+    const list = $('sel-list'); list.innerHTML = '';
+    items.forEach(n => {
+      const b = document.createElement('button');
+      b.className = 'lang' + (picks.has(n) ? ' on' : ''); b.setAttribute('aria-pressed', picks.has(n));
+      const s = document.createElement('span'); s.textContent = n; s.style.flex = '1';
+      b.appendChild(s); b.insertAdjacentHTML('beforeend', CK);
+      b.addEventListener('click', () => { picks.has(n) ? picks.delete(n) : picks.add(n); renderSelect(); });
+      list.appendChild(b);
+    });
+    if (!items.length) list.innerHTML = '<p class="noresult">No languages found.</p>';
+    refresh();
+  }
+  $('q').addEventListener('input', renderSelect);
+  $('sel-back').addEventListener('click', () => show('s-languages'));
+  $('done').addEventListener('click', () => {
+    if (mode === 'impr' && picks.size === 0) return;   // disabled
+    const n = picks.size;
+    picks.forEach(name => rows.push({ name, on: true, isNew: true }));
+    renderLanguages(); show('s-languages');
+    if (!n) toast('Done was tapped, but no language was selected.');
+  });
+
+  // ---------- Button states and callouts ----------
+  function setBtn(btn, enabled) { btn.setAttribute('aria-disabled', !enabled); }
+  function callout(el, text, color, show) { el.textContent = text; el.className = 'callout ' + color + (show ? ' show' : ''); }
+  function refresh() {
+    const ch = changed();
+    if (mode === 'impr') {
+      setBtn($('save'), ch); setBtn($('done'), picks.size > 0);
+      callout($('co-save'), ch ? 'Something changed, so Save below is on.' : 'Nothing changed yet, so Save below is off.', 'green', true);
+      callout($('co-done'), picks.size ? 'A new language is selected, so Done is on.' : 'No new language selected, so Done is off. Back is always there.', 'green', true);
+    } else {
+      setBtn($('save'), true); setBtn($('done'), true);
+      callout($('co-save'), 'Bug: Save below is enabled though nothing changed.', 'red', !ch);
+      callout($('co-done'), 'Bug: Done is enabled though no new language is selected.', 'red', picks.size === 0);
+    }
+  }
+  // Tapping a disabled Save or Done does nothing and does not take focus
+  ['save', 'done'].forEach(id => ['mousedown', 'pointerdown'].forEach(ev =>
+    $(id).addEventListener(ev, e => { if ($(id).getAttribute('aria-disabled') === 'true') e.preventDefault(); })));
+
+  document.querySelectorAll('.proto').forEach(el => el.addEventListener('click', () =>
+    toast(`This is just a prototype of Languages, so ${el.dataset.name} is disabled.`)));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && openSheet) closeSheet(); });
+
+  renderSummary(); setMode('issue');
+  function tick() { const d = new Date(); $('clock').textContent = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  tick(); setInterval(tick, 30000);
+})();
+</script>
+</body>
+</html>
