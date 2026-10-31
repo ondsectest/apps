@@ -29,12 +29,14 @@ Seen on a Vivo 60e phone running Android.
 - Tap one day for From and another for To to search a date range. **If only From is chosen, results are for that one day only.** Tapping an earlier day second swaps them.
 - Words and dates work together, for example "invoice" from 21 to 26 October. The dates show as a chip with × to clear them, next to a result count.
 - Clear messages when nothing matches. **Cancel** returns to the normal Home.
-- **Tapping a transcript copies it**, and "Copied" appears right on that transcript, not elsewhere on the screen. The Copy button does the same.
+- **Tapping a transcript shows "Copied"** in a single white box right on that transcript, not elsewhere on the screen, with no blue tap flash. The Copy button does the same.
+- **Copy, Report and the more button are always shown** under every transcript.
 
 ## Using the prototype
 
 - Two buttons sit above the phone: **Issue** (red) and **Improvement** (green). Each opens a short explanation and switches the prototype to that version.
 - Home matches the app: the word count card in green serif type, serif day headings, and transcript cards with Copy, Report and more.
+- In the prototype, "Copied" is shown but the text is not written to the clipboard, so the phone does not add its own second "Copied" popup.
 - The history is sample text. Try searching "invoice" to see results across three dates.
 - **Dictionary**, **Style** and **Snippets** in the bottom tabs are greyed out and show "Intentionally disabled" when tapped.
 
