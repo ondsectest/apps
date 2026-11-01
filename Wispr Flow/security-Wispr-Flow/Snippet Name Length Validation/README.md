@@ -49,8 +49,10 @@ Area: Settings, Dictionary, Snippets (observed via the app's own `POST /api/v1/d
 
 An evidence GIF (`Snippet_Name_Bypass.gif`) and an MP4 (`Snippet_Name_Bypass.mp4`) show the full sequence: the field capping at 60, an interceptor in the middle sending a 100-character name via a headless request, the `HTTP 200` response, and the Snippets screen then showing the over-limit name. Recreated with redacted, mock data only.
 
+A real screenshot (`evidence-snippet-over-60-chars.png`) from the researcher's own account shows the Snippets list holding snippet names longer than the 60-character client limit. The names are deliberately dummy test strings (for example "Just make something dummy. Keep repeating 1,000 times. Jusfa123", which is 63 characters) and the expansions are placeholders, so the screenshot contains no real or sensitive data.
+
 Plain HTML, CSS and JavaScript in a single file, with no build step. Open `index.html` in any browser.
 
-Note: testing was done on the researcher's own account and traffic only, using a locally trusted proxy. The real captures are shared with Wispr privately, not published here.
+Note: testing was done on the researcher's own account and traffic only, using a locally trusted proxy. The published screenshot uses dummy test data; any captures that contain live tokens or real data are shared with Wispr privately, not published here.
 
 Finding by Santhosh Tuppad.
