@@ -47,7 +47,7 @@ Area: Settings, Dictionary, Snippets (observed via the app's own `POST /api/v1/d
 - In **Issue**, the snippet name field caps typing at 60. The request and response panels show the bypass: a 100-character name is accepted with `HTTP 200`, and the stored record keeps all 100 characters.
 - In **Improvement**, the server rejects the over-limit name with a `422` validation error that names the 60-character limit and the received length, and no snippet is created.
 
-An evidence GIF (`Snippet_Name_Bypass.gif`) shows the full sequence: the field capping at 60, an intercepting proxy in the middle sending a 100-character name, the `HTTP 200` response, and the Snippets list then showing the over-limit name. Recreated with redacted, mock data only.
+An evidence GIF (`Snippet_Name_Bypass.gif`) and an MP4 (`Snippet_Name_Bypass.mp4`) show the full sequence: the field capping at 60, an interceptor in the middle sending a 100-character name via a headless request, the `HTTP 200` response, and the Snippets screen then showing the over-limit name. Recreated with redacted, mock data only.
 
 Plain HTML, CSS and JavaScript in a single file, with no build step. Open `index.html` in any browser.
 
