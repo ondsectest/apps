@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wispr Flow: Snippet form saves despite a client-side validation error</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a;
+    --text:#e9edf3; --muted:#9aa4b2; --accent:#6ea8fe;
+    --issue:#ff6b6b; --issue-bg:#2a1518; --issue-line:#4a2126;
+    --fix:#38d39f; --fix-bg:#10231d; --fix-line:#1c4535;
+    --code:#0b0d11; --warn:#ffcf6b;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:"SFMono-Regular",ui-monospace,Menlo,Consolas,"DejaVu Sans Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);
+       line-height:1.5;-webkit-font-smoothing:antialiased;padding:24px 16px 56px}
+  .wrap{max-width:900px;margin:0 auto}
+  header h1{font-size:20px;margin:0 0 6px;font-weight:650;letter-spacing:.2px}
+  header p.sub{margin:0 0 18px;color:var(--muted);font-size:13.5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  .tag{font-size:11.5px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);
+       padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .toggle{display:inline-flex;background:var(--panel2);border:1px solid var(--line);
+          border-radius:10px;padding:4px;gap:4px;margin-bottom:14px}
+  .toggle button{appearance:none;border:0;background:transparent;color:var(--muted);
+          font:inherit;font-size:13.5px;font-weight:600;padding:8px 16px;border-radius:7px;cursor:pointer}
+  .toggle button.active[data-mode="issue"]{background:var(--issue);color:#2a0d0f}
+  .toggle button.active[data-mode="fix"]{background:var(--fix);color:#06231a}
+  .banner{border-radius:10px;padding:12px 14px;margin-bottom:18px;font-size:13.5px;border:1px solid}
+  .banner.issue{background:var(--issue-bg);border-color:var(--issue-line);color:#ffd4d7}
+  .banner.fix{background:var(--fix-bg);border-color:var(--fix-line);color:#c6f5e4}
+  .banner b{color:#fff}
+
+  .app{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:18px;position:relative}
+  .titlebar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel2);border-bottom:1px solid var(--line)}
+  .dot{width:11px;height:11px;border-radius:50%}
+  .dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+  .titlebar .t{margin-left:8px;font-size:12.5px;color:var(--muted)}
+  .appbody{padding:18px}
+  .dlg-title{font-size:16px;font-weight:650;margin:0 0 14px}
+  label.fieldlab{display:block;font-size:12.5px;color:var(--muted);margin:0 0 6px}
+  input.name{width:100%;background:var(--code);border:1px solid var(--line);border-radius:8px;
+       color:var(--text);font:inherit;font-size:14px;padding:10px 12px;font-family:var(--mono);margin-bottom:14px}
+  input.name:focus{outline:none;border-color:var(--accent)}
+  .exp-toolbar{display:flex;gap:4px;align-items:center;border:1px solid var(--line);border-bottom:0;
+       border-radius:8px 8px 0 0;padding:6px 8px;background:var(--panel2)}
+  .exp-toolbar span{width:26px;height:24px;display:grid;place-items:center;color:var(--muted);font-size:13px;border-radius:5px}
+  .exp-wrap{position:relative}
+  textarea.exp{width:100%;background:var(--code);border:1px solid var(--line);border-radius:0 0 8px 8px;
+       color:var(--text);font:inherit;font-size:13px;padding:12px;font-family:var(--mono);resize:none;min-height:150px;line-height:1.5}
+  textarea.exp:focus{outline:none;border-color:var(--accent)}
+  .exp-wrap.over textarea.exp{border-color:var(--issue)}
+  .exp-wrap.over .exp-toolbar{border-color:var(--issue)}
+  .counter{text-align:right;font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:6px}
+  .counter.over{color:var(--issue);font-weight:700}
+  .errline{display:none;font-size:12.5px;color:var(--issue);margin-top:6px}
+  .exp-wrap.over ~ .errline.show-when-over{display:block}
+  .dlgfoot{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+  .btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;font-weight:600;
+       font-size:13.5px;padding:9px 16px;border-radius:8px;cursor:pointer}
+  .btn.primary{background:#f3f3f5;color:#14161c;border-color:#f3f3f5}
+  .btn.primary[disabled]{opacity:.45;cursor:not-allowed}
+  .fillrow{margin-top:12px}
+  .fillrow button{border:1px dashed var(--line);background:transparent;color:var(--muted);font:inherit;
+       font-size:12.5px;padding:7px 12px;border-radius:7px;cursor:pointer}
+  .toast{position:absolute;right:16px;bottom:16px;display:flex;align-items:center;gap:8px;
+       background:#14301f;border:1px solid #235c3b;color:#bff3d6;font-size:13px;padding:10px 14px;border-radius:9px;
+       opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}
+  .toast.show{opacity:1;transform:none}
+  .toast.bad{background:var(--issue-bg);border-color:var(--issue-line);color:#ffd4d7}
+
+  .flow{margin-top:18px}
+  .steplab{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:0 0 8px;font-weight:650}
+  .code{background:var(--code);border:1px solid var(--line);border-radius:10px;overflow:auto}
+  .code .hd{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+  .code pre{margin:0;padding:12px 14px;font-family:var(--mono);font-size:12.5px;line-height:1.6;white-space:pre;color:#cfd6e0}
+  .code pre .k{color:#8fb7ff}.code pre .s{color:#8be0a6}.code pre .n{color:#ffcf6b}.code pre .c{color:#6b7280}
+  .hl{background:rgba(255,107,107,.16);border-radius:3px;padding:0 2px}
+  .hlfix{background:rgba(56,211,159,.16);border-radius:3px;padding:0 2px}
+
+  .call{display:flex;gap:10px;align-items:flex-start;background:var(--panel2);border:1px solid var(--line);
+       border-radius:10px;padding:12px 14px;margin-top:14px;font-size:13px}
+  .call .ic{flex:none;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:13px;font-weight:800}
+  .call.bad .ic{background:var(--issue);color:#2a0d0f}
+  .call.good .ic{background:var(--fix);color:#06231a}
+  .call.warn .ic{background:var(--warn);color:#3a2a06}
+  .call .tx{color:#d8dee8}
+  .call .tx b{color:#fff}
+  ul.points{margin:12px 0 0;padding-left:18px;font-size:13px;color:#d2d9e2}
+  ul.points li{margin:6px 0}
+
+  footer{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;align-items:center;
+       margin-top:26px;padding-top:18px;border-top:1px solid var(--line)}
+  footer a{color:var(--accent);text-decoration:none;font-size:13px;font-weight:600}
+  footer a:hover{text-decoration:underline}
+  footer .by{color:var(--muted);font-size:12.5px}
+  .only-issue,.only-fix{display:none}
+  body[data-mode="issue"] .only-issue{display:block}
+  body[data-mode="fix"] .only-fix{display:block}
+</style>
+</head>
+<body data-mode="issue">
+<div class="wrap">
+  <header>
+    <h1>Snippet form saves despite a client-side validation error</h1>
+    <p class="sub">Wispr Flow Pro desktop (macOS). The Edit snippet expansion field shows a red over-limit error at 4853 / 4000 characters, but Save changes stays active, the save succeeds, and a confirmation appears. The error is shown but not enforced.</p>
+  </header>
+
+  <div class="meta">
+    <span class="tag">Platform: Wispr Flow Desktop, macOS</span>
+    <span class="tag">Area: Settings, Dictionary, Snippets, Edit</span>
+    <span class="tag">Field: Expansion, max 4000</span>
+    <span class="tag">Type: Error shown, not enforced</span>
+    <span class="tag">CWE-20 / CWE-1284 / CWE-1173</span>
+  </div>
+
+  <div class="toggle" role="tablist">
+    <button data-mode="issue" class="active">Issue</button>
+    <button data-mode="fix">Improvement</button>
+  </div>
+
+  <div class="banner issue only-issue">
+    <b>What happens:</b> the expansion counter turns red at <b>4853 / 4000</b> and the field shows an error border, yet <b>Save changes</b> is still clickable. Saving succeeds and the snippet is updated, so the validation error does not actually block the save.
+  </div>
+  <div class="banner fix only-fix">
+    <b>Expected:</b> while the expansion is over the limit, <b>Save changes</b> is disabled and a clear message says how much to remove. The form cannot be saved in an invalid state, and the server rejects an over-limit value as a backstop.
+  </div>
+
+  <!-- APP WINDOW -->
+  <div class="app">
+    <div class="titlebar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="t">Wispr Flow, Settings, Snippets</span>
+    </div>
+    <div class="appbody">
+      <p class="dlg-title">Edit snippet</p>
+      <label class="fieldlab" for="name">Snippet name</label>
+      <input id="name" class="name" type="text" value="hello" spellcheck="false">
+
+      <label class="fieldlab" for="exp">Expansion</label>
+      <div class="exp-wrap" id="expwrap">
+        <div class="exp-toolbar"><span>B</span><span><i>I</i></span><span>&#8801;</span><span>&#8803;</span><span>&#128279;</span></div>
+        <textarea id="exp" class="exp" spellcheck="false" placeholder="What the snippet expands to"></textarea>
+      </div>
+      <div class="counter" id="counter">0 / 4000</div>
+      <p class="errline show-when-over" id="errline"></p>
+
+      <div class="fillrow">
+        <button id="fill" type="button">Fill to 4853 characters (over the 4000 limit)</button>
+      </div>
+
+      <div class="dlgfoot">
+        <button class="btn" id="cancel" type="button">Cancel</button>
+        <button class="btn primary" id="save" type="button">Save changes</button>
+      </div>
+
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+  <!-- ISSUE FLOW -->
+  <div class="only-issue">
+    <div class="call bad">
+      <span class="ic">!</span>
+      <span class="tx"><b>Try it:</b> press "Fill to 4853 characters". The counter turns red and the field shows an error, but Save changes stays active. Press it and the snippet saves anyway, with an "Updated snippet hello" confirmation. The error is cosmetic.</span>
+    </div>
+
+    <div class="flow">
+      <p class="steplab">What the client does</p>
+      <div class="code">
+        <div class="hd"><span>Expansion field state at save time</span><span>Client</span></div>
+<pre>counter:        <span class="hl">4853 / 4000</span>   <span class="c">// over the limit, shown in red</span>
+field border:   <span class="hl">error (red)</span>
+Save changes:   <span class="hl">enabled</span>       <span class="c">// not blocked</span>
+result:         <span class="hl">saved</span>, toast "Updated snippet hello"</pre>
+      </div>
+    </div>
+
+    <ul class="points">
+      <li>The validation error is displayed but not wired to the submit action, so the limit is advisory, not enforced.</li>
+      <li>Consistent with the other dictionary and snippet findings, the server also appears to accept the over-limit value, so there is no backstop either.</li>
+      <li>A user can save content the product's own rules forbid without realising the "error" did nothing.</li>
+      <li>Oversized expansions can bloat storage and sync payloads and break any view that assumes the 4000-character bound.</li>
+    </ul>
+  </div>
+
+  <!-- FIX FLOW -->
+  <div class="only-fix">
+    <div class="call good">
+      <span class="ic">&#10003;</span>
+      <span class="tx"><b>Try it:</b> press "Fill to 4853 characters". The counter turns red, a message says how much to remove, and Save changes is disabled until the expansion is within 4000. The form cannot be saved in an invalid state.</span>
+    </div>
+
+    <div class="flow">
+      <p class="steplab">Server backstop</p>
+      <div class="code">
+        <div class="hd"><span>POST /api/v1/dictionary/personal  (expansion over 4000)</span><span>Response</span></div>
+<pre><span class="k">HTTP/2 422 Unprocessable Entity</span>
+
+{
+  <span class="k">"error"</span>: <span class="s hlfix">"validation_error"</span>,
+  <span class="k">"field"</span>: <span class="s">"replacement"</span>,
+  <span class="k">"message"</span>: <span class="s hlfix">"Expansion must be 4000 characters or fewer."</span>,
+  <span class="k">"max_length"</span>: <span class="n">4000</span>,
+  <span class="k">"received_length"</span>: <span class="n">4853</span>
+}</pre>
+      </div>
+    </div>
+
+    <ul class="points">
+      <li>Tie the validation state to the submit control: while any field is invalid, the save action is disabled.</li>
+      <li>Show a specific, actionable message (how many characters to remove), not just a red counter.</li>
+      <li>Enforce the same limit on the server and reject over-limit values, so a bypassed client cannot save them.</li>
+      <li>Apply the pattern consistently across the snippet name, the expansion, and other forms.</li>
+    </ul>
+
+    <div class="call warn">
+      <span class="ic">i</span>
+      <span class="tx">Demonstrated on the researcher's own account only, with dummy data. No other users or data were involved.</span>
+    </div>
+  </div>
+
+  <footer>
+    <a href="https://github.com/ondsectest/apps/tree/main/Wispr%20Flow" rel="noopener">View on GitHub</a>
+    <a href="https://www.linkedin.com/in/santhosh-tuppad-338b7412/" rel="noopener">Connect on LinkedIn</a>
+    <span class="by">Santhosh Tuppad</span>
+  </footer>
+</div>
+
+<script>
+  var body=document.body;
+  document.querySelectorAll('.toggle button').forEach(function(b){
+    b.addEventListener('click',function(){
+      body.setAttribute('data-mode',b.getAttribute('data-mode'));
+      document.querySelectorAll('.toggle button').forEach(function(x){
+        x.classList.toggle('active', x===b);
+      });
+      update();
+    });
+  });
+
+  var MAX=4000;
+  var exp=document.getElementById('exp');
+  var wrap=document.getElementById('expwrap');
+  var counter=document.getElementById('counter');
+  var errline=document.getElementById('errline');
+  var save=document.getElementById('save');
+  var toast=document.getElementById('toast');
+  var tt;
+
+  function mode(){ return body.getAttribute('data-mode'); }
+
+  function update(){
+    var n=exp.value.length;
+    var over=n>MAX;
+    counter.textContent=n+' / '+MAX;
+    counter.classList.toggle('over',over);
+    wrap.classList.toggle('over',over);
+    if(over){ errline.textContent='Expansion is over the limit by '+(n-MAX)+' characters. Remove '+(n-MAX)+' to save.'; }
+    else { errline.textContent=''; }
+    // Issue: Save never disabled. Improvement: Save disabled while over limit.
+    if(mode()==='fix'){ save.disabled=over; }
+    else { save.disabled=false; }
+  }
+  exp.addEventListener('input',update);
+
+  document.getElementById('fill').addEventListener('click',function(){
+    var s=''; while(s.length<4853){ s+='0123456789'; } exp.value=s.slice(0,4853);
+    update(); exp.focus();
+  });
+  document.getElementById('cancel').addEventListener('click',function(){
+    exp.value=''; update();
+  });
+
+  function showToast(text,bad){
+    clearTimeout(tt);
+    toast.textContent=(bad?'':'✓  ')+text;
+    toast.classList.toggle('bad',!!bad);
+    toast.classList.add('show');
+    tt=setTimeout(function(){ toast.classList.remove('show'); },2600);
+  }
+
+  save.addEventListener('click',function(){
+    if(save.disabled) return;
+    var n=exp.value.length;
+    if(mode()==='issue'){
+      // The bug: saves even when over the limit
+      showToast('Updated snippet hello'+(n>MAX?'  (saved despite the 4000 error)':''), false);
+    } else {
+      showToast('Updated snippet hello', false);
+    }
+  });
+
+  update();
+</script>
+</body>
+</html>
