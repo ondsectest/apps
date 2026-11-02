@@ -47,7 +47,7 @@ Area: Dictionary and Snippets.
 - In **Issue**, the request and response panels show the bypass: `is_snippet` set to true with `replacement` null is accepted with `HTTP 200`, and the Snippets list then shows a snippet with no expansion, marked invalid.
 - In **Improvement**, the server rejects the request with a `422` validation error stating that a snippet requires a non-empty expansion.
 
-A screen recording of this finding is kept in this folder (added separately). The sample word is a harmless placeholder (`bye`), so the published material contains no real or sensitive data.
+A screen recording of this finding (`Snippet_No_Expansion_Demo.mp4`) is kept in this folder. It has narration, so keep the audio on. The sample word is a harmless placeholder (`bye`), so the published material contains no real or sensitive data.
 
 Plain HTML, CSS and JavaScript in a single file, with no build step. Open `index.html` in any browser.
 
