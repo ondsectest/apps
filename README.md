@@ -41,6 +41,19 @@ account, no data collected.
 - [README](./PSSS/README.md) — architecture and the design decisions behind it
 - [INSTALL](./PSSS/INSTALL.md) — loading it in Chrome, permissions it asks for, troubleshooting
 
+## [Same Tab Links](./Same%20Tab%20Links)
+
+A Chrome extension that stops sites from opening every link in a new tab. Links that ask for
+`target="_blank"` load in the tab you are already in, on the sites you choose. Middle-click and
+Ctrl/Cmd-click still open a new tab when you want one.
+
+Manifest V3, zero permissions granted at install — it only activates on a site after you switch
+it on and approve Chrome's permission prompt for that site. No server, no account, no data
+collected.
+
+- [README](./Same%20Tab%20Links/README.md) — how it works and its known limits
+- [INSTALL](./Same%20Tab%20Links/INSTALL.md) — loading it in Chrome, turning it on and off, troubleshooting
+
 ## [Wispr Flow](./Wispr%20Flow)
 
 UX prototypes for Wispr Flow: small, working pages that each show one improvement, such as a
