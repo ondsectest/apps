@@ -28,19 +28,6 @@ permission — nothing recorded can leave the phone.
 - [README](./SureStep/README.md) — architecture and the design rules behind it
 - [INSTALL](./SureStep/INSTALL.md) — prerequisites, building, sideloading, troubleshooting
 
-## [PSSS](./PSSS)
-
-A Chrome extension that hides your real password length from shoulder-surfers. While a password
-field is focused, it shows a randomized, constantly-changing number of dots instead of the real
-character count — the real password you typed is unchanged and is exactly what gets submitted.
-
-Manifest V3, zero permissions granted at install — protection only activates on a site after you
-explicitly approve it, per-site or globally, through Chrome's own permission dialog. No server, no
-account, no data collected.
-
-- [README](./PSSS/README.md) — architecture and the design decisions behind it
-- [INSTALL](./PSSS/INSTALL.md) — loading it in Chrome, permissions it asks for, troubleshooting
-
 ## [Same Tab Links](./Same%20Tab%20Links)
 
 A Chrome extension that stops sites from opening every link in a new tab. Links that ask for
